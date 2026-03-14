@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: idsp-main
+  namespace: argocd
+spec:
+  destination:
+    namespace: argocd
+    server: https://kubernetes.idsp-main.svc
+  project: default
+  source:
+    directory: 
+      recurse: true
+    path: envs/idsp-main
+    repoURL: 
