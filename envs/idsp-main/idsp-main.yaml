@@ -12,4 +12,12 @@ spec:
     directory: 
       recurse: true
     path: envs/idsp-main
-    repoURL: 
+    targetRevision: main
+    repoURL: https://github.com/iyesdendeni/idsp-with-argocd.git
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      syncOptions:
+        - CreateNamespace=true
+        
