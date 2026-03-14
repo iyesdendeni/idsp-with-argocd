@@ -35,3 +35,8 @@ Your local files are now pushed to your GitHub repository. For subsequent update
         git add .  
         git commit -m "Your update message"  
         git push  
+
+To force remove an application:
+When you try to remove an ArgoCD application from the WebUI, sometimes it gets stuck in deleting state because a finalizer cannot complete its work. To immediately remove the application, you can force-remove its finalizers:
+
+kubectl patch application/APP_NAME --type json --patch='[ { "op": "remove", "path": "/metadata/finalizers" } ]' -n argocd
