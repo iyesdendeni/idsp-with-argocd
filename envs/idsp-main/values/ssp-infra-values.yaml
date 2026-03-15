@@ -8,5 +8,5 @@ fluent-bit:
 global:
   registry:
     existingSecrets:
-    - name: ssp-infra-registrypullsecret
+    - name: ssp-staging-registrypullsecret
 sspReleaseName: ssp
