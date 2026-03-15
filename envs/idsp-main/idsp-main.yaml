@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: idsp-main
   namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
 spec:
   destination:
     namespace: argocd
@@ -18,6 +20,12 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        maxDuration: 3m0s
+        factor: 2
     syncOptions:
         - CreateNamespace=true
         
