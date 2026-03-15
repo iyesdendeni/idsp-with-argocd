@@ -22,21 +22,6 @@ spec:
     - repoURL: https://github.com/iyesdendeni/idsp-with-argocd.git
       targetRevision: main
       ref: values
-  patches:
-  - patch: |-
-      - op: replace
-        path: /spec/ttlSecondsAfterFinished
-        value: 10
-    target:
-      kind: Job
-      name: ingress-nginx-admission-create
-  - patch: |-
-      - op: replace
-        path: /spec/ttlSecondsAfterFinished
-        value: 10
-    target:
-      kind: Job
-      name: ingress-nginx-admission-patch
   syncPolicy:
     automated:
       prune: true
