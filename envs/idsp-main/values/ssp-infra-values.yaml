@@ -2,7 +2,6 @@
 db:
   enabled: true
 fluent-bit:
-  enabled: true
   imagePullSecrets:
   - name: ssp-staging-registrypullsecret
 global:

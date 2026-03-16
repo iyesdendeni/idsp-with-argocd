@@ -23,7 +23,7 @@ spec:
       targetRevision: main
       ref: values
   syncPolicy:
-    automated:
+    manual:
       prune: true
       selfHeal: true
     syncOptions:
