@@ -446,7 +446,6 @@ spec:
           volumeMounts:
             - mountPath: /fluent-bit/etc
               name: config
-              subPath: null
             - mountPath: /var/log
               name: varlog
             - mountPath: /var/lib/docker/containers
@@ -578,8 +577,6 @@ spec:
           name: metrics
         command:
         - percona-xtradb-cluster-operator
-        resources:
-          null
         env:
         - name: WATCH_NAMESPACE
           valueFrom:
@@ -607,9 +604,7 @@ metadata:
     app.kubernetes.io/instance: ssp-infra
     app.kubernetes.io/managed-by: Helm 
     helm.sh/chart: ssp-infra-1.0.3228
-  annotations:
-    argocd.argoproj.io/hook: PostSync
-    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+  
 spec:
   # currently we do not want to restart in case the job fails
   backoffLimit: 1
@@ -677,7 +672,7 @@ kind: PerconaXtraDBCluster
 metadata:
 # "ssp" in the name matches name of the SSP's chart
   name: ssp-ssp-db
-  finalizers:
+#  finalizers:
 #    - delete-pxc-pods-in-order
 #    - delete-proxysql-pvc
 #    - delete-pxc-pvc
