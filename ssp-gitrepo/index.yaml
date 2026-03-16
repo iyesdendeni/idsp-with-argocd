@@ -9,5 +9,5 @@ description: Release 4.0.1 - Helm chart to deploy Fluent Bit, Database (internal
 name: ssp-infra
 type: application
 urls:
-- https://github.com/iyesdendeni/idsp-with-argocd.git/ssp-gitrepo/ssp-infra-4.0.2-1031.stage.tgz
+- https://github.com/iyesdendeni/idsp-with-argocd/tree/main/ssp-gitrepo/ssp-infra-4.0.2-1031.stage.tgz
 version: 4.0.2-1031.stage
