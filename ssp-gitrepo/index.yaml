@@ -1,6 +1,6 @@
 apiVersion: v2
-entries
-  ssp-infra
+entries:
+  ssp-infra:
   - apiVersion: v2
     appVersion: 4.0.2-1031.stage
     dependencies:
