@@ -4,9 +4,7 @@ metadata:
   name: ssp-infra
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "5"  
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
+    argocd.argoproj.io/sync-wave: "5"
 spec:
   destination:
     namespace: ssp
