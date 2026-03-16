@@ -4,7 +4,7 @@ metadata:
   name: ssp-infra
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/sync-wave: "7"
 spec:
   destination:
     namespace: ssp
@@ -14,9 +14,6 @@ spec:
     - repoURL: $values
       targetRevision: 4.0.2-1031.stage
       path: envs/idsp-main/manifests/ssp-infra-manifest.yaml
-#      repoURL: https://github.com/iyesdendeni/idsp-with-argocd/tree/main/ssp-gitrepo
-#      targetRevision: 4.0.2-1031.stage
-#
 #      repoURL: https://ssp-helm-charts-staging.storage.googleapis.com
 #      targetRevision: 4.0.0-1144.stage
     - repoURL: https://github.com/iyesdendeni/idsp-with-argocd.git
