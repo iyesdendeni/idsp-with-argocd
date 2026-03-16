@@ -1,0 +1,13 @@
+apiVersion: v2
+appVersion: 4.0.2-1031.stage
+dependencies:
+- condition: fluent-bit.enabled
+  name: fluent-bit
+  repository: https://fluent.github.io/helm-charts
+  version: 0.47.10
+description: Release 4.0.1 - Helm chart to deploy Fluent Bit, Database (internal mode)
+name: ssp-infra
+type: application
+urls:
+- https://github.com/iyesdendeni/idsp-with-argocd.git/ssp-gitrepo/ssp-infra-4.0.2-1031.stage.tgz
+version: 4.0.2-1031.stage
