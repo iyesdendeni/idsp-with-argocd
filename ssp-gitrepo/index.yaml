@@ -8,6 +8,7 @@ dependencies:
 description: Release 4.0.1 - Helm chart to deploy Fluent Bit, Database (internal mode)
 name: ssp-infra
 type: application
-urls:
-- https://github.com/iyesdendeni/idsp-with-argocd/tree/main/ssp-gitrepo/ssp-infra-4.0.2-1031.stage.tgz
+#urls:
+#- https://github.com/iyesdendeni/idsp-with-argocd/tree/main/ssp-gitrepo/ssp-infra-4.0.2-1031.stage.tgz
+repository: https://github.com/iyesdendeni/idsp-with-argocd/tree/main/ssp-gitrepo/ssp-infra-4.0.2-1031.stage.tgz
 version: 4.0.2-1031.stage
