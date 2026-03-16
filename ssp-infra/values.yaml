@@ -1,0 +1,333 @@
+nameOverride: ""
+fullnameOverride: ""
+
+sspReleaseName: ""
+
+global:
+  registry:
+    existingSecrets: []
+    url: https://index.docker.io/v2/
+    credentials:
+      username: ""
+      password: ""
+      email: ""
+  securityContext:
+    runAsUser: 65534
+    runAsGroup: 65534
+    fsGroup: 1337
+    seccompProfile:
+      type: RuntimeDefault
+  sso:
+    enabled: false
+  monitoring:
+    prometheusOperator:
+      serviceMonitor:
+        additionalLabels: {}
+        interval: 30s
+
+# ***************************************************  Start of SSP Percona DB Config ***************************************************
+
+db:
+  enabled: true
+  cluster:
+    enabled: false
+    size: 3
+  pmm:
+    enabled: false
+    serverHost: percona-pmm-service.monitoring.svc
+  pxc:
+    crVersion: 1.14.0
+    resources:
+      requests:
+#        memory: 1G
+        cpu: 600m
+        # ephemeral-storage: 1Gi
+      limits:
+#        memory: 4G
+        cpu: 2000m
+        # ephemeral-storage: 1Gi
+  operator:
+    resources:
+#     requests:
+#        memory: 1G
+#        cpu: 200m
+#      limits:
+#        memory: 1G
+#        cpu: 400m
+# Percona: https://github.com/percona/percona-helm-charts/blob/21527d03b072eb232fbd700bd5a9d221c12dc068/charts/pxc-db/README.md
+  image:
+    pxc:
+      repository: percona/percona-xtradb-cluster
+      tag: 8.0.36-28.1 
+    operator:
+      repository: percona/percona-xtradb-cluster-operator
+      tag: 1.14.1
+    haproxy:
+      repository: percona/percona-xtradb-cluster-operator
+      tag: 1.14.1-haproxy
+    proxysql:
+      repository: percona/percona-xtradb-cluster-operator
+      tag: 1.14.1-proxysql2.5.5-1.2
+    pmm:
+      repository: percona/pmm-client
+      tag: 2.43.2
+    backup:
+      repository: percona/percona-xtradb-cluster-operator
+      tag: 1.14.1-pxc8.0-backup-pxb8.0.35
+    mysqld_exporter:
+      repository: prom/mysqld-exporter
+      tag: v0.14.0
+  imagePullPolicy: IfNotPresent
+  existingSecret: ""
+  existingSslSecret: ""
+  existingSslInternalSecret: ""
+  schema:
+    name: iamauth
+    user: iamauth
+    password: ""
+  password:
+    root: ""
+    xtrabackup: ""
+    monitor: ""
+    clustercheck: ""
+    proxyadmin: ""
+    pmmserver: ""
+    operator: ""
+
+
+  persistence:
+    size: 80Gi
+
+ # root: cm9vdF9wYXNzd29yZA==
+ # xtrabackup: YmFja3VwX3Bhc3N3b3Jk
+ # monitor: bW9uaXRvcg==
+ # clustercheck: Y2x1c3RlcmNoZWNrcGFzc3dvcmQ=
+ # proxyadmin: YWRtaW5fcGFzc3dvcmQ=
+ # pmmserver: c3VwYXxefHBheno=
+ # operator: b3BlcmF0b3JhZG1pbg==
+
+# ***************************************************  End of SSP Percona DB Runtime Config ***************************************************
+
+# SSP FluenBit subchart config
+fluent-bit:
+  enabled: true
+  fullConfigMap: true
+  existingConfigMap: "ssp-infra-config"
+  podLabels: null
+  image:
+    fluent_bit:
+      repository: fluent/fluent-bit
+      tag: 3.1.10
+    pullPolicy: IfNotPresent
+  imagePullSecrets:
+  - name: ssp-infra-registrypullsecret
+  volumeMounts:
+  - name: config
+    mountPath: /fluent-bit/etc
+    subPath: null
+
+  testFramework:
+    enabled: false
+  env: []
+  #  - name: FOO
+  #    value: "bar"
+
+  # The envWithTpl array below has the same usage as "env", but is using the tpl function to support templatable string.
+  # This can be useful when you want to pass dynamic values to the Chart using the helm argument "--set <variable>=<value>"
+  # https://helm.sh/docs/howto/charts_tips_and_tricks/#using-the-tpl-function
+  envWithTpl: []
+  #  - name: FOO_2
+  #    value: "{{ .Values.foo2 }}"
+  #
+  # foo2: bar2
+
+  envFrom: []
+  resources: 
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+  #config: Use customConfig below.
+
+# End of SSP fluent-bit subchart config
+
+# ***************************************************
+# Start of fluent-bit custom Config - used to create fluent-bit's config map
+# This config map is passed to the subchart as fluent-bit.existingConfigMap: "ssp-infra-config"
+  customConfig:
+    additionalInputs: []
+    # - logFileFilter: "ssg-*.log"
+    #   tagWith: ssg_msg
+    #   #parser: custom  #(optional, when not specified sspfbService.parser will be used) 
+
+    # additionalParsers: |
+    #  [PARSER]
+    #     Name        custom
+    #     etc.
+
+    # additionalFilters:
+    # - tags:
+    #   - ssp_log
+    #   template: |
+    #      Name record_modifier
+    #      Record environment prod
+
+    additionalStreamTasks: []
+    # - tags:
+    #   - current: ssg_msg
+    #     new: ssg_log
+    #   template: |
+    #     Exec CREATE STREAM ${newTag} WITH (tag='${newTag}') AS SELECT * from TAG:'${currentTag}.*' WHERE @record.contains(package);
+
+    # Use this outputs section to specify the output configuration for they different message tags
+    # ssp default available tags: ssp_log, ssp_audit, ssp_tp_log
+    # siteminder default available tags (when global.sso.enabled=true): sso_ps_log, sso_ag_log, sso_admin_log
+    outputs:
+    - tags:
+      - ssp_log
+      - ssp_audit
+      - ssp_tp_log
+      # uncomment the following 3 tags to include SiteMinder outputs
+      # - sso_admin_log
+      # - sso_ps_log
+      # - sso_ag_log
+      # uncomment the following tag to include API Gateway outputs
+      # - ssg_log
+      template: |
+          Name es
+          Host  elasticsearch-master.logging.svc
+          Port  9200
+          Suppress_Type_Name On
+          Replace_Dots On
+          Index ${tag}
+          HTTP_User elastic
+          HTTP_Passwd changeMe
+    
+# ***************************************************  Start of SSP Fluent Bit Runtime Config ***************************************************
+
+# SSP Fluentbit config
+sspfbService:
+  flush: 1
+  logLevel: info
+  parser: cri
+  ingressLogsIncluded: false
+
+metrics:
+  enabled: false
+  service:
+    # labels:
+    #   key: value
+    annotations: {}
+    # In order for Prometheus to consume metrics automatically use the following annotations:
+    # prometheus.io/path: "/api/v1/metrics/prometheus"
+    # prometheus.io/port: "2020"
+    # prometheus.io/scrape: "true"
+    port: 2020
+    type: ClusterIP
+  serviceMonitor:
+    enabled: false
+    # namespace: monitoring
+    # interval: 30s
+    # scrapeTimeout: 10s
+
+input:
+  tail:
+    memBufLimit: "20MB"
+    ignore_older: ""
+    preserveLastProcessedLine:
+      enabled: true
+    # refreshInterval: 5
+    # bufMaxSize: "1M" 
+    # bufChunkSize: "128k" 
+    # skipLongLines: "On"
+    # dbSyncMode: "Normal"
+    # additionalInputParams: |
+    #   Skip_Empty_Lines  Off
+    #   Threaded          false
+
+filter:
+  kubeURL: https://kubernetes.default.svc:443
+  kubeCAFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+  kubeTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+  kubeTagPrefix: ssp_msg.var.log.containers.
+
+
+# ***************************************************  End of SSP Fluent Bit Runtime Config ***************************************************
+
+# ***************************************************  settings for mysql db create job ***************************************************
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# ***************************************************  DEPRECATED Fluent Bit Config ***************************************************
+###### Deprecated - use fluent-bit.customConfig.outputs instead ####
+backend:
+  type: es
+  #type: splunk
+  forward:
+    host: fluentd
+    port: 24284
+    tls: "off"
+    tls_verify: "on"
+    tls_debug: 1
+    shared_key:
+  es:
+    host: elasticsearch-master.logging.svc
+    port: 9200
+    # Elastic Index Name
+    index: ssp_log
+    logstash_prefix: ssp_log
+    retry_limit: "False"
+    # Optional username credential for Elastic X-Pack access
+    http_user: elastic
+    # Password for user defined in HTTP_User
+    http_passwd: changeme
+    # Optional TLS encryption to ElasticSearch instance
+    tls: "off"
+    tls_verify: "on"
+    # TLS certificate for the Elastic (in PEM format). Pass in correct value if tls=on and tls_verify=on.
+    tls_ca_file: null
+    # TLS debugging levels = 1-4
+    tls_debug: 1
+  splunk:
+    host: 127.0.0.1
+    port: 8088
+    token: ""
+    send_raw: "off"
+    tls: "on"
+    tls_verify: "off"
+    tls_debug: 1
+  stackdriver: {}
+
+  ##
+  ## Ref: http://fluentbit.io/documentation/current/output/http.html
+  ##
+  http:
+    host: 127.0.0.1
+    port: 80
+    uri: "/"
+    http_user:
+    http_passwd:
+    tls: "off"
+    tls_verify: "on"
+    tls_debug: 1
+    ## Specify the data format to be used in the HTTP request body
+    ## Can be either 'msgpack' or 'json'
+    format: msgpack
+    #json_date_format: double or iso8601
+    json_date_format: null
+    headers: []
+
+extraEntries:
+  output: |-
+#     # >=1 additional Key/Value entrie(s) for existing Ouput section
+
+analytics:
+  enabled: false
+  siddhi:
+    host: ""
+    port: 8390
+    uri: "/Analytics/UserLoginBehaviour"

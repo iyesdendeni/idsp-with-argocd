@@ -1,0 +1,1005 @@
+{{- if index .Values "fluent-bit" "enabled" -}}
+{{- $foundDepricatedCM := ( include "exists.deprecated.fluentbit.configmap" . ) }}
+{{ if eq $foundDepricatedCM "true" }}
+#continue to use the old config map only if there is an old (deprecated) fluent-bit configmap already
+#(determined by checking the cmversion annotation, $foundDepricatedCM = {{$foundDepricatedCM}}))
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ index .Values "fluent-bit" "existingConfigMap" }}
+  labels:
+    app: {{ template "ssp-infra.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+data:
+  fluent-bit-service.conf: |
+    [SERVICE]
+        Flush        {{ .Values.sspfbService.flush }}
+        Daemon       Off
+        Log_Level    {{ .Values.sspfbService.logLevel }}
+        Parsers_File parsers.conf
+        Streams_File fluent-bit-streamer.conf
+        HTTP_Server  On
+        HTTP_Listen  0.0.0.0
+        HTTP_Port    {{ index .Values "fluent-bit"  "service" "port" }}
+        Health_Check On
+
+  fluent-bit-input.conf: |
+{{- if .Values.sspfbService.ingressLogsIncluded }}
+    [INPUT]
+        Name             tail
+        Tag              ssp_msg.*
+        Path             /var/log/containers/ingress-nginx-controller-*.log
+        Parser           docker
+        Refresh_Interval 5
+        Mem_Buf_Limit    20M
+        Buffer_Max_Size  1M
+        Buffer_Chunk_Size 128k
+        Skip_Long_Lines  On
+{{- end }}
+    [INPUT]
+        Name             tail
+        Tag              ssp_msg.*
+        Path             /var/log/containers/{{ required "***** A valid sspReleaseName value required in values.yaml or passed in via --set sspReleaseName=<value>!  If this is an upgrade, specify --reuse-values. *****" .Values.sspReleaseName }}-ssp-*.log
+        Parser           {{ .Values.sspfbService.parser }}
+        Refresh_Interval 5
+        Mem_Buf_Limit    {{ .Values.input.tail.memBufLimit }}
+        Buffer_Max_Size  1M
+        Buffer_Chunk_Size 128k
+        Skip_Long_Lines  On
+{{- if .Values.input.tail.ignore_older }}
+        Ignore_Older    {{ .Values.input.tail.ignore_older }}
+{{- end }}
+{{- if .Values.input.tail.preserveLastProcessedLine.enabled }}
+        DB               /var/log/tail-containers-state-{{.Values.sspReleaseName }}-ssp.db
+        DB.Sync          Normal
+{{- end }}
+{{- if .Values.global.sso.enabled }}
+    [INPUT]
+        Name              tail
+        Tag               sso_ps_log_msg.*
+        Path              /var/log/containers/{{ required "***** A valid ssoReleaseName value required in values.yaml or passed in via --set ssoReleaseName=<value>!  If this is an upgrade, specify --reuse-values. *****" .Values.ssoReleaseName }}-siteminder-policy-server-*_*_policy-server-log*.log
+        Parser            {{ .Values.sspfbService.parser }}
+        Refresh_Interval 5
+        Mem_Buf_Limit    {{ .Values.input.tail.memBufLimit }}
+        Buffer_Max_Size  1M
+        Buffer_Chunk_Size 128k
+        Skip_Long_Lines  On
+{{- if .Values.input.tail.ignore_older }}
+        Ignore_Older      {{ .Values.input.tail.ignore_older }}
+{{- end }}
+{{- if .Values.input.tail.preserveLastProcessedLine.enabled }}
+        DB               /var/log/tail-containers-state-{{.Values.ssoReleaseName }}-sso.db
+        DB.Sync          Normal
+{{- end }}
+    [INPUT]
+        Name              tail
+        Tag               sso_ps_trace_msg.*
+        Path              /var/log/containers/{{ required "***** A valid ssoReleaseName value required in values.yaml or passed in via --set ssoReleaseName=<value>!  If this is an upgrade, specify --reuse-values. *****" .Values.ssoReleaseName }}-siteminder-policy-server-*_*_policy-server-trace-log*.log
+        Parser            {{ .Values.sspfbService.parser }}
+        Mem_Buf_Limit    {{ .Values.input.tail.memBufLimit }}
+        Buffer_Max_Size  1M
+        Buffer_Chunk_Size 128k
+        Skip_Long_Lines  On
+        Refresh_Interval  5
+{{- if .Values.input.tail.ignore_older }}
+        Ignore_Older      {{ .Values.input.tail.ignore_older }}
+{{- end }}
+{{- if .Values.input.tail.preserveLastProcessedLine.enabled }}
+        DB               /var/log/tail-containers-state-{{.Values.ssoReleaseName }}-sso.db
+        DB.Sync          Normal
+{{- end }}
+    [INPUT]
+        Name              tail
+        Tag               sso_ps_access_msg.*
+        Path              /var/log/containers/{{ required "***** A valid ssoReleaseName value required in values.yaml or passed in via --set ssoReleaseName=<value>!  If this is an upgrade, specify --reuse-values. *****" .Values.ssoReleaseName }}-siteminder-policy-server-*_*_policy-server-access-log*.log
+        Parser            {{ .Values.sspfbService.parser }}
+        Mem_Buf_Limit    {{ .Values.input.tail.memBufLimit }}
+        Buffer_Max_Size  1M
+        Buffer_Chunk_Size 128k
+        Skip_Long_Lines  On
+        Refresh_Interval  5
+{{- if .Values.input.tail.ignore_older }}
+        Ignore_Older      {{ .Values.input.tail.ignore_older }}
+{{- end }}
+{{- if .Values.input.tail.preserveLastProcessedLine.enabled }}
+        DB               /var/log/tail-containers-state-{{.Values.ssoReleaseName }}-sso.db
+        DB.Sync          Normal
+{{- end }}
+    [INPUT]
+        Name              tail
+        Tag               sso_adminps_log_msg.*
+        Path              /var/log/containers/{{ required "***** A valid ssoReleaseName value required in values.yaml or passed in via --set ssoReleaseName=<value>!  If this is an upgrade, specify --reuse-values. *****" .Values.ssoReleaseName }}-siteminder-admin-*_*_policy-server-log*.log
+        Parser            {{ .Values.sspfbService.parser }}
+        Mem_Buf_Limit    {{ .Values.input.tail.memBufLimit }}
+        Buffer_Max_Size  1M
+        Buffer_Chunk_Size 128k
+        Skip_Long_Lines  On
+        Refresh_Interval  5
+{{- if .Values.input.tail.ignore_older }}
+        Ignore_Older      {{ .Values.input.tail.ignore_older }}
+{{- end }}
+{{- if .Values.input.tail.preserveLastProcessedLine.enabled }}
+        DB               /var/log/tail-containers-state-{{.Values.ssoReleaseName }}-sso.db
+        DB.Sync          Normal
+{{- end }}
+    [INPUT]
+        Name              tail
+        Tag               sso_adminps_trace_msg.*
+        Path              /var/log/containers/{{ required "***** A valid ssoReleaseName value required in values.yaml or passed in via --set ssoReleaseName=<value>!  If this is an upgrade, specify --reuse-values. *****" .Values.ssoReleaseName }}-siteminder-admin-*_*_policy-server-trace-log*.log
+        Parser            {{ .Values.sspfbService.parser }}
+        Mem_Buf_Limit     {{ .Values.input.tail.memBufLimit }}
+        Buffer_Max_Size   1M
+        Buffer_Chunk_Size 128k
+        Skip_Long_Lines   On
+        Refresh_Interval  5
+{{- if .Values.input.tail.ignore_older }}
+        Ignore_Older      {{ .Values.input.tail.ignore_older }}
+{{- end }}
+{{- if .Values.input.tail.preserveLastProcessedLine.enabled }}
+        DB               /var/log/tail-containers-state-{{.Values.ssoReleaseName }}-sso.db
+        DB.Sync          Normal
+{{- end }}
+    [INPUT]
+        Name              tail
+        Tag               sso_adminps_access_msg.*
+        Path              /var/log/containers/{{ required "***** A valid ssoReleaseName value required in values.yaml or passed in via --set ssoReleaseName=<value>!  If this is an upgrade, specify --reuse-values. *****" .Values.ssoReleaseName }}-siteminder-admin-*_*_policy-server-access-log*.log
+        Parser            {{ .Values.sspfbService.parser }}
+        Mem_Buf_Limit     {{ .Values.input.tail.memBufLimit }}
+        Buffer_Max_Size   1M
+        Buffer_Chunk_Size 128k
+        Skip_Long_Lines   On
+        Refresh_Interval  5
+{{- if .Values.input.tail.ignore_older }}
+        Ignore_Older      {{ .Values.input.tail.ignore_older }}
+{{- end }}
+{{- if .Values.input.tail.preserveLastProcessedLine.enabled }}
+        DB               /var/log/tail-containers-state-{{.Values.ssoReleaseName }}-sso.db
+        DB.Sync          Normal
+{{- end }}
+    [INPUT]
+        Name              tail
+        Tag               sso_adminui_msg.*
+        Path              /var/log/containers/{{ required "***** A valid ssoReleaseName value required in values.yaml or passed in via --set ssoReleaseName=<value>!  If this is an upgrade, specify --reuse-values. *****" .Values.ssoReleaseName }}-siteminder-admin-*_*_admin-ui-*.log
+        Parser            {{ .Values.sspfbService.parser }}
+        Mem_Buf_Limit     {{ .Values.input.tail.memBufLimit }}
+        Buffer_Max_Size   1M
+        Buffer_Chunk_Size 128k
+        Skip_Long_Lines   On
+        Refresh_Interval  5
+{{- if .Values.input.tail.ignore_older }}
+        Ignore_Older      {{ .Values.input.tail.ignore_older }}
+{{- end }}
+{{- if .Values.input.tail.preserveLastProcessedLine.enabled }}
+        DB               /var/log/tail-containers-state-{{.Values.ssoReleaseName }}-sso.db
+        DB.Sync          Normal
+{{- end }}
+    [INPUT]
+        Name              tail
+        Tag               sso_ag_srv_log_msg.*
+        Path              /var/log/containers/*-siteminder-access-gateway-*_*_access-gateway-server-log*.log
+        Parser            {{ .Values.sspfbService.parser }}
+        Mem_Buf_Limit     {{ .Values.input.tail.memBufLimit }}
+        Buffer_Max_Size   1M
+        Buffer_Chunk_Size 128k
+        Skip_Long_Lines   On
+        Refresh_Interval  5
+{{- if .Values.input.tail.ignore_older }}
+        Ignore_Older      {{ .Values.input.tail.ignore_older }}
+{{- end }}
+{{- if .Values.input.tail.preserveLastProcessedLine.enabled }}
+        DB               /var/log/tail-containers-state-{{.Values.ssoReleaseName }}-sso.db
+        DB.Sync          Normal
+{{- end }}
+    [INPUT]
+        Name              tail
+        Tag               sso_ag_sps_log_msg.*
+        Path              /var/log/containers/*-siteminder-access-gateway-*_*_access-gateway-sps-log*.log
+        Parser            {{ .Values.sspfbService.parser }}
+        Mem_Buf_Limit     {{ .Values.input.tail.memBufLimit }}
+        Buffer_Max_Size   1M
+        Buffer_Chunk_Size 128k
+        Skip_Long_Lines   On
+        Refresh_Interval  5
+{{- if .Values.input.tail.ignore_older }}
+        Ignore_Older      {{ .Values.input.tail.ignore_older }}
+{{- end }}
+{{- if .Values.input.tail.preserveLastProcessedLine.enabled }}
+        DB               /var/log/tail-containers-state-{{.Values.ssoReleaseName }}-sso.db
+        DB.Sync          Normal
+{{- end }}
+    [INPUT]
+        Name              tail
+        Tag               sso_ag_fwstrace_log_msg.*
+        Path              /var/log/containers/*-siteminder-access-gateway-*_*_access-gateway-fwstrace-log*.log
+        Parser            {{ .Values.sspfbService.parser }}
+        Mem_Buf_Limit     {{ .Values.input.tail.memBufLimit }}
+        Buffer_Max_Size   1M
+        Buffer_Chunk_Size 128k
+        Skip_Long_Lines   On
+        Refresh_Interval  5
+{{- if .Values.input.tail.ignore_older }}
+        Ignore_Older      {{ .Values.input.tail.ignore_older }}
+{{- end }}
+{{- if .Values.input.tail.preserveLastProcessedLine.enabled }}
+        DB               /var/log/tail-containers-state-{{.Values.ssoReleaseName }}-sso.db
+        DB.Sync          Normal
+{{- end }}
+    [INPUT]
+        Name              tail
+        Tag               sso_ag_affwebserv_log_msg.*
+        Path              /var/log/containers/*-siteminder-access-gateway-*_*_access-gateway-affwebservices-log*.log
+        Parser            {{ .Values.sspfbService.parser }}
+        Mem_Buf_Limit     {{ .Values.input.tail.memBufLimit }}
+        Buffer_Max_Size   1M
+        Buffer_Chunk_Size 128k
+        Skip_Long_Lines   On
+        Refresh_Interval  5
+{{- if .Values.input.tail.ignore_older }}
+        Ignore_Older      {{ .Values.input.tail.ignore_older }}
+{{- end }}
+{{- if .Values.input.tail.preserveLastProcessedLine.enabled }}
+        DB               /var/log/tail-containers-state-{{.Values.ssoReleaseName }}-sso.db
+        DB.Sync          Normal
+{{- end }}
+
+{{- end }}
+
+  fluent-bit-filter.conf: |
+    [FILTER]
+        Name                kubernetes
+        Match               ssp_msg.*
+        Kube_Tag_Prefix     {{ .Values.filter.kubeTagPrefix }}
+        Kube_URL            {{ .Values.filter.kubeURL }}
+        Kube_CA_File        {{ .Values.filter.kubeCAFile }}
+        Kube_Token_File     {{ .Values.filter.kubeTokenFile }}
+        Merge_Log           On
+        Keep_Log            Off
+        #Merge_Log_Key       ""
+        K8S-Logging.Parser  Off
+        #K8S-Logging.Exclude On
+        #Use_Journal         On
+{{- if .Values.global.sso.enabled }}
+    [FILTER]
+        Name                kubernetes
+        Match               sso_ps_log_msg.*
+        Kube_Tag_Prefix     sso_ps_log_msg.var.log.containers.
+        Kube_URL            {{ .Values.filter.kubeURL }}
+        Kube_CA_File        {{ .Values.filter.kubeCAFile }}
+        Kube_Token_File     {{ .Values.filter.kubeTokenFile }}
+        Merge_Log           On
+        Keep_Log            Off
+        #Merge_Log_Key       ""
+        K8S-Logging.Parser  Off
+        #K8S-Logging.Exclude On
+        #Use_Journal         On
+
+    [FILTER]
+        Name                kubernetes
+        Match               sso_ps_trace_msg.*
+        Kube_Tag_Prefix     sso_ps_trace_msg.var.log.containers.
+        Kube_URL            {{ .Values.filter.kubeURL }}
+        Kube_CA_File        {{ .Values.filter.kubeCAFile }}
+        Kube_Token_File     {{ .Values.filter.kubeTokenFile }}
+        Merge_Log           On
+        Keep_Log            Off
+        #Merge_Log_Key       ""
+        K8S-Logging.Parser  Off
+        #K8S-Logging.Exclude On
+        #Use_Journal         On
+
+    [FILTER]
+        Name                kubernetes
+        Match               sso_adminps_log_msg.*
+        Kube_Tag_Prefix     sso_adminps_log_msg.var.log.containers.
+        Kube_URL            {{ .Values.filter.kubeURL }}
+        Kube_CA_File        {{ .Values.filter.kubeCAFile }}
+        Kube_Token_File     {{ .Values.filter.kubeTokenFile }}
+        Merge_Log           On
+        Keep_Log            Off
+        #Merge_Log_Key       ""
+        K8S-Logging.Parser  Off
+        #K8S-Logging.Exclude On
+        #Use_Journal         On
+
+    [FILTER]
+        Name                kubernetes
+        Match               sso_adminps_trace_msg.*
+        Kube_Tag_Prefix     sso_adminps_trace_msg.var.log.containers.
+        Kube_URL            {{ .Values.filter.kubeURL }}
+        Kube_CA_File        {{ .Values.filter.kubeCAFile }}
+        Kube_Token_File     {{ .Values.filter.kubeTokenFile }}
+        Merge_Log           On
+        Keep_Log            Off
+        #Merge_Log_Key       ""
+        K8S-Logging.Parser  Off
+        #K8S-Logging.Exclude On
+        #Use_Journal         On
+
+    [FILTER]
+        Name                kubernetes
+        Match               sso_adminui_msg.*
+        Kube_Tag_Prefix     sso_adminui_msg.var.log.containers.
+        Kube_URL            {{ .Values.filter.kubeURL }}
+        Kube_CA_File        {{ .Values.filter.kubeCAFile }}
+        Kube_Token_File     {{ .Values.filter.kubeTokenFile }}
+        Merge_Log           On
+        Keep_Log            Off
+        #Merge_Log_Key       ""
+        K8S-Logging.Parser  Off
+        #K8S-Logging.Exclude On
+        #Use_Journal         On
+
+    [FILTER]
+        Name                kubernetes
+        Match               sso_ag_srv_log_msg.*
+        Kube_Tag_Prefix     sso_ag_srv_log_msg.var.log.containers.
+        Kube_URL            {{ .Values.filter.kubeURL }}
+        Kube_CA_File        {{ .Values.filter.kubeCAFile }}
+        Kube_Token_File     {{ .Values.filter.kubeTokenFile }}
+        Merge_Log           On
+        Keep_Log            Off
+        #Merge_Log_Key       ""
+        K8S-Logging.Parser  Off
+        #K8S-Logging.Exclude On
+        #Use_Journal         On
+
+    [FILTER]
+        Name                kubernetes
+        Match               sso_ag_sps_log_msg.*
+        Kube_Tag_Prefix     sso_ag_sps_log_msg.var.log.containers.
+        Kube_URL            {{ .Values.filter.kubeURL }}
+        Kube_CA_File        {{ .Values.filter.kubeCAFile }}
+        Kube_Token_File     {{ .Values.filter.kubeTokenFile }}
+        Merge_Log           On
+        Keep_Log            Off
+        #Merge_Log_Key       ""
+        K8S-Logging.Parser  Off
+        #K8S-Logging.Exclude On
+        #Use_Journal         On
+
+    [FILTER]
+        Name                kubernetes
+        Match               sso_ag_fwstrace_log_msg.*
+        Kube_Tag_Prefix     sso_ag_fwstrace_log_msg.var.log.containers.
+        Kube_URL            {{ .Values.filter.kubeURL }}
+        Kube_CA_File        {{ .Values.filter.kubeCAFile }}
+        Kube_Token_File     {{ .Values.filter.kubeTokenFile }}
+        Merge_Log           On
+        Keep_Log            Off
+        #Merge_Log_Key       ""
+        K8S-Logging.Parser  Off
+        #K8S-Logging.Exclude On
+        #Use_Journal         On
+
+    [FILTER]
+        Name                kubernetes
+        Match               sso_ag_affwebserv_log_msg.*
+        Kube_Tag_Prefix     sso_ag_affwebserv_log_msg.var.log.containers.
+        Kube_URL            {{ .Values.filter.kubeURL }}
+        Kube_CA_File        {{ .Values.filter.kubeCAFile }}
+        Kube_Token_File     {{ .Values.filter.kubeTokenFile }}
+        Merge_Log           On
+        Keep_Log            Off
+        #Merge_Log_Key       ""
+        K8S-Logging.Parser  Off
+        #K8S-Logging.Exclude On
+        #Use_Journal         On
+
+    [FILTER]
+        Name                kubernetes
+        Match               sso_adminps_access_msg.*
+        Kube_Tag_Prefix     sso_adminps_access_msg.var.log.containers.
+        Kube_URL            {{ .Values.filter.kubeURL }}
+        Kube_CA_File        {{ .Values.filter.kubeCAFile }}
+        Kube_Token_File     {{ .Values.filter.kubeTokenFile }}
+        Merge_Log           On
+        Keep_Log            Off
+        #Merge_Log_Key       ""
+        K8S-Logging.Parser  Off
+        #K8S-Logging.Exclude On
+        #Use_Journal         O
+
+    [FILTER]
+        Name                kubernetes
+        Match               sso_ps_access_msg.*
+        Kube_Tag_Prefix     sso_ps_access_msg.var.log.containers.
+        Kube_URL            {{ .Values.filter.kubeURL }}
+        Kube_CA_File        {{ .Values.filter.kubeCAFile }}
+        Kube_Token_File     {{ .Values.filter.kubeTokenFile }}
+        Merge_Log           On
+        Keep_Log            Off
+        #Merge_Log_Key       ""
+        K8S-Logging.Parser  Off
+        #K8S-Logging.Exclude On
+        #Use_Journal         O
+{{- end }}
+
+
+  fluent-bit-output.conf: |
+{{- if .Values.analytics.enabled }}
+    [OUTPUT]
+      Name  http
+      Match ssp_audit_siddhi
+      Host {{ .Values.analytics.siddhi.host }}
+      Port {{ .Values.analytics.siddhi.port }}
+      URI {{ .Values.analytics.siddhi.uri }}
+      Format json
+{{- end }}
+{{- if eq .Values.backend.type "test" }}
+    [OUTPUT]
+        Name  file
+        Match *
+        Path /tmp/fluent-bit.log
+{{- else if eq .Values.backend.type "forward" }}
+    [OUTPUT]
+        Name          forward
+        Match         *
+        Host          {{ .Values.backend.forward.host }}
+        Port          {{ .Values.backend.forward.port }}
+        Retry_Limit False
+{{- if .Values.backend.forward.shared_key }}
+        Shared_Key    {{ .Values.backend.forward.shared_key }}
+{{- end }}
+{{- if .Values.backend.forward.tls }}
+        tls           {{ .Values.backend.forward.tls }}
+{{- end }}
+{{- if .Values.backend.forward.tls_verify }}
+        tls.verify    {{ .Values.backend.forward.tls_verify }}
+{{- end }}
+{{- if .Values.backend.forward.tls_debug }}
+        tls.debug     {{ .Values.backend.forward.tls_debug }}
+{{- end }}
+{{ else if eq .Values.backend.type "es" }}
+    [OUTPUT]
+        Name  es
+        Match ssp_log
+        Host  {{ .Values.backend.es.host }}
+        Port  {{ .Values.backend.es.port }}
+        tls   {{ .Values.backend.es.tls }}
+        tls.verify {{ .Values.backend.es.tls_verify }}
+        {{- if .Values.backend.es.tls_ca_file }}
+        tls.ca_file {{ .Values.backend.es.tls_ca_file }}
+        {{- end }}
+        Suppress_Type_Name On
+        #Type  _doc
+        #Logstash_Format "On"
+        #Retry_Limit {{ .Values.backend.es.retry_limit }}
+        #Time_Key "@timestamp"
+        Replace_Dots  On
+        #Logstash_Prefix ssp_log
+        #Logstash_Prefix_Key ssp_log
+        Index ssp_log
+{{- if .Values.backend.es.http_user }}
+        HTTP_User {{ .Values.backend.es.http_user }}
+{{- if .Values.backend.es.http_passwd }}
+        HTTP_Passwd {{ .Values.backend.es.http_passwd }}
+{{- else }}
+        HTTP_Passwd ${HTTP_PASSWORD}
+{{- end }}
+{{- end }}
+
+    [OUTPUT]
+        Name  es
+        Match ssp_audit
+        Host  {{ .Values.backend.es.host }}
+        Port  {{ .Values.backend.es.port }}
+        tls   {{ .Values.backend.es.tls }}
+        tls.verify {{ .Values.backend.es.tls_verify }}
+        {{- if .Values.backend.es.tls_ca_file }}
+        tls.ca_file {{ .Values.backend.es.tls_ca_file }}
+        {{- end }}
+        Suppress_Type_Name On
+        #Type  _doc
+        #Logstash_Format "On"
+        #Retry_Limit {{ .Values.backend.es.retry_limit }}
+        #Time_Key "@timestamp"
+        Replace_Dots  On
+        #Logstash_Prefix ssp_audit
+        #Logstash_Prefix_Key ssp_audit
+        Index ssp_audit
+{{- if .Values.backend.es.http_user }}
+        HTTP_User {{ .Values.backend.es.http_user }}
+{{- if .Values.backend.es.http_passwd }}
+        HTTP_Passwd {{ .Values.backend.es.http_passwd }}
+{{- else }}
+        HTTP_Passwd ${HTTP_PASSWORD}
+{{- end }}
+{{- end }}
+
+    [OUTPUT]
+        Name  es
+        Match ssp_tp_log
+        Host  {{ .Values.backend.es.host }}
+        Port  {{ .Values.backend.es.port }}
+        tls   {{ .Values.backend.es.tls }}
+        tls.verify {{ .Values.backend.es.tls_verify }}
+        {{- if .Values.backend.es.tls_ca_file }}
+        tls.ca_file {{ .Values.backend.es.tls_ca_file }}
+        {{- end }}
+        Suppress_Type_Name On
+        #Type  _doc
+        #Logstash_Format "On"
+        #Retry_Limit {{ .Values.backend.es.retry_limit }}
+        #Time_Key "@timestamp"
+        Replace_Dots  On
+        #Logstash_Prefix ssp_tp_log
+        #Logstash_Prefix_Key ssp_tp_log
+        Index ssp_tp_log
+{{- if .Values.backend.es.http_user }}
+        HTTP_User {{ .Values.backend.es.http_user }}
+{{- if .Values.backend.es.http_passwd }}
+        HTTP_Passwd {{ .Values.backend.es.http_passwd }}
+{{- else }}
+        HTTP_Passwd ${HTTP_PASSWORD}
+{{- end }}
+{{- end }}
+
+{{- if .Values.global.sso.enabled }}
+    [OUTPUT]
+        Name  es
+        Match sso_ps_log
+        Host  {{ .Values.backend.es.host }}
+        Port  {{ .Values.backend.es.port }}
+        tls   {{ .Values.backend.es.tls }}
+        tls.verify {{ .Values.backend.es.tls_verify }}
+        {{- if .Values.backend.es.tls_ca_file }}
+        tls.ca_file {{ .Values.backend.es.tls_ca_file }}
+        {{- end }}
+        Suppress_Type_Name On
+        #Type  _doc
+        #Logstash_Format "On"
+        #Retry_Limit {{ .Values.backend.es.retry_limit }}
+        #Time_Key "@timestamp"
+        Replace_Dots  On
+        #Logstash_Prefix sso_log
+        #Logstash_Prefix_Key sso_log
+        Index sso_ps_log
+{{- if .Values.backend.es.http_user }}
+        HTTP_User {{ .Values.backend.es.http_user }}
+{{- if .Values.backend.es.http_passwd }}
+        HTTP_Passwd {{ .Values.backend.es.http_passwd }}
+{{- else }}
+        HTTP_Passwd ${HTTP_PASSWORD}
+{{- end }}
+{{- end }}
+
+    [OUTPUT]
+        Name  es
+        Match sso_ps_trace
+        Host  {{ .Values.backend.es.host }}
+        Port  {{ .Values.backend.es.port }}
+        tls   {{ .Values.backend.es.tls }}
+        tls.verify {{ .Values.backend.es.tls_verify }}
+        {{- if .Values.backend.es.tls_ca_file }}
+        tls.ca_file {{ .Values.backend.es.tls_ca_file }}
+        {{- end }}
+        Suppress_Type_Name On
+        #Type  _doc
+        #Logstash_Format "On"
+        #Retry_Limit {{ .Values.backend.es.retry_limit }}
+        #Time_Key "@timestamp"
+        Replace_Dots  On
+        #Logstash_Prefix sso_log
+        #Logstash_Prefix_Key sso_log
+        Index sso_ps_trace
+{{- if .Values.backend.es.http_user }}
+        HTTP_User {{ .Values.backend.es.http_user }}
+{{- if .Values.backend.es.http_passwd }}
+        HTTP_Passwd {{ .Values.backend.es.http_passwd }}
+{{- else }}
+        HTTP_Passwd ${HTTP_PASSWORD}
+{{- end }}
+{{- end }}
+
+    [OUTPUT]
+        Name  es
+        Match sso_adminps_log
+        Host  {{ .Values.backend.es.host }}
+        Port  {{ .Values.backend.es.port }}
+        tls   {{ .Values.backend.es.tls }}
+        tls.verify {{ .Values.backend.es.tls_verify }}
+        {{- if .Values.backend.es.tls_ca_file }}
+        tls.ca_file {{ .Values.backend.es.tls_ca_file }}
+        {{- end }}
+        Suppress_Type_Name On
+        #Type  _doc
+        #Logstash_Format "On"
+        #Retry_Limit {{ .Values.backend.es.retry_limit }}
+        #Time_Key "@timestamp"
+        Replace_Dots  On
+        #Logstash_Prefix sso_log
+        #Logstash_Prefix_Key sso_log
+        Index sso_adminps_log
+{{- if .Values.backend.es.http_user }}
+        HTTP_User {{ .Values.backend.es.http_user }}
+{{- if .Values.backend.es.http_passwd }}
+        HTTP_Passwd {{ .Values.backend.es.http_passwd }}
+{{- else }}
+        HTTP_Passwd ${HTTP_PASSWORD}
+{{- end }}
+{{- end }}
+
+    [OUTPUT]
+        Name  es
+        Match sso_adminps_trace
+        Host  {{ .Values.backend.es.host }}
+        Port  {{ .Values.backend.es.port }}
+        tls   {{ .Values.backend.es.tls }}
+        tls.verify {{ .Values.backend.es.tls_verify }}
+        {{- if .Values.backend.es.tls_ca_file }}
+        tls.ca_file {{ .Values.backend.es.tls_ca_file }}
+        {{- end }}
+        Suppress_Type_Name On
+        #Type  _doc
+        #Logstash_Format "On"
+        #Retry_Limit {{ .Values.backend.es.retry_limit }}
+        #Time_Key "@timestamp"
+        Replace_Dots  On
+        #Logstash_Prefix sso_log
+        #Logstash_Prefix_Key sso_log
+        Index sso_adminps_trace
+{{- if .Values.backend.es.http_user }}
+        HTTP_User {{ .Values.backend.es.http_user }}
+{{- if .Values.backend.es.http_passwd }}
+        HTTP_Passwd {{ .Values.backend.es.http_passwd }}
+{{- else }}
+        HTTP_Passwd ${HTTP_PASSWORD}
+{{- end }}
+{{- end }}
+
+    [OUTPUT]
+        Name  es
+        Match sso_adminui_log
+        Host  {{ .Values.backend.es.host }}
+        Port  {{ .Values.backend.es.port }}
+        tls   {{ .Values.backend.es.tls }}
+        tls.verify {{ .Values.backend.es.tls_verify }}
+        {{- if .Values.backend.es.tls_ca_file }}
+        tls.ca_file {{ .Values.backend.es.tls_ca_file }}
+        {{- end }}
+        Suppress_Type_Name On
+        #Type  _doc
+        #Logstash_Format "On"
+        #Retry_Limit {{ .Values.backend.es.retry_limit }}
+        #Time_Key "@timestamp"
+        Replace_Dots  On
+        #Logstash_Prefix sso_log
+        #Logstash_Prefix_Key sso_log
+        Index sso_adminui_log
+{{- if .Values.backend.es.http_user }}
+        HTTP_User {{ .Values.backend.es.http_user }}
+{{- if .Values.backend.es.http_passwd }}
+        HTTP_Passwd {{ .Values.backend.es.http_passwd }}
+{{- else }}
+        HTTP_Passwd ${HTTP_PASSWORD}
+{{- end }}
+{{- end }}
+
+    [OUTPUT]
+        Name  es
+        Match sso_ps_access
+        Host  {{ .Values.backend.es.host }}
+        Port  {{ .Values.backend.es.port }}
+        tls   {{ .Values.backend.es.tls }}
+        tls.verify {{ .Values.backend.es.tls_verify }}
+        {{- if .Values.backend.es.tls_ca_file }}
+        tls.ca_file {{ .Values.backend.es.tls_ca_file }}
+        {{- end }}
+        Suppress_Type_Name On
+        #Type  _doc
+        #Logstash_Format "On"
+        #Retry_Limit {{ .Values.backend.es.retry_limit }}
+        #Time_Key "@timestamp"
+        Replace_Dots  On
+        #Logstash_Prefix sso_log
+        #Logstash_Prefix_Key sso_log
+        Index sso_ps_access
+{{- if .Values.backend.es.http_user }}
+        HTTP_User {{ .Values.backend.es.http_user }}
+{{- if .Values.backend.es.http_passwd }}
+        HTTP_Passwd {{ .Values.backend.es.http_passwd }}
+{{- else }}
+        HTTP_Passwd ${HTTP_PASSWORD}
+{{- end }}
+{{- end }}
+
+    [OUTPUT]
+        Name  es
+        Match sso_adminps_access
+        Host  {{ .Values.backend.es.host }}
+        Port  {{ .Values.backend.es.port }}
+        tls   {{ .Values.backend.es.tls }}
+        tls.verify {{ .Values.backend.es.tls_verify }}
+        {{- if .Values.backend.es.tls_ca_file }}
+        tls.ca_file {{ .Values.backend.es.tls_ca_file }}
+        {{- end }}
+        Suppress_Type_Name On
+        #Type  _doc
+        #Logstash_Format "On"
+        #Retry_Limit {{ .Values.backend.es.retry_limit }}
+        #Time_Key "@timestamp"
+        Replace_Dots  On
+        #Logstash_Prefix sso_log
+        #Logstash_Prefix_Key sso_log
+        Index sso_adminps_access
+{{- if .Values.backend.es.http_user }}
+        HTTP_User {{ .Values.backend.es.http_user }}
+{{- if .Values.backend.es.http_passwd }}
+        HTTP_Passwd {{ .Values.backend.es.http_passwd }}
+{{- else }}
+        HTTP_Passwd ${HTTP_PASSWORD}
+{{- end }}
+{{- end }}
+
+    [OUTPUT]
+        Name  es
+        Match sso_agsrv_log
+        Host  {{ .Values.backend.es.host }}
+        Port  {{ .Values.backend.es.port }}
+        tls   {{ .Values.backend.es.tls }}
+        tls.verify {{ .Values.backend.es.tls_verify }}
+        {{- if .Values.backend.es.tls_ca_file }}
+        tls.ca_file {{ .Values.backend.es.tls_ca_file }}
+        {{- end }}
+        Suppress_Type_Name On
+        #Type  _doc
+        #Logstash_Format "On"
+        #Retry_Limit {{ .Values.backend.es.retry_limit }}
+        #Time_Key "@timestamp"
+        Replace_Dots  On
+        #Logstash_Prefix sso_log
+        #Logstash_Prefix_Key sso_log
+        Index sso_agsrv_log
+{{- if .Values.backend.es.http_user }}
+        HTTP_User {{ .Values.backend.es.http_user }}
+{{- if .Values.backend.es.http_passwd }}
+        HTTP_Passwd {{ .Values.backend.es.http_passwd }}
+{{- else }}
+        HTTP_Passwd ${HTTP_PASSWORD}
+{{- end }}
+{{- end }}
+
+
+    [OUTPUT]
+        Name  es
+        Match sso_agsps_log
+        Host  {{ .Values.backend.es.host }}
+        Port  {{ .Values.backend.es.port }}
+        tls   {{ .Values.backend.es.tls }}
+        tls.verify {{ .Values.backend.es.tls_verify }}
+        {{- if .Values.backend.es.tls_ca_file }}
+        tls.ca_file {{ .Values.backend.es.tls_ca_file }}
+        {{- end }}
+        Suppress_Type_Name On
+        #Type  _doc
+        #Logstash_Format "On"
+        #Retry_Limit {{ .Values.backend.es.retry_limit }}
+        #Time_Key "@timestamp"
+        Replace_Dots  On
+        #Logstash_Prefix sso_log
+        #Logstash_Prefix_Key sso_log
+        Index sso_agsps_log
+{{- if .Values.backend.es.http_user }}
+        HTTP_User {{ .Values.backend.es.http_user }}
+{{- if .Values.backend.es.http_passwd }}
+        HTTP_Passwd {{ .Values.backend.es.http_passwd }}
+{{- else }}
+        HTTP_Passwd ${HTTP_PASSWORD}
+{{- end }}
+{{- end }}
+
+
+    [OUTPUT]
+        Name  es
+        Match sso_ag_fwstrace_log
+        Host  {{ .Values.backend.es.host }}
+        Port  {{ .Values.backend.es.port }}
+        tls   {{ .Values.backend.es.tls }}
+        tls.verify {{ .Values.backend.es.tls_verify }}
+        {{- if .Values.backend.es.tls_ca_file }}
+        tls.ca_file {{ .Values.backend.es.tls_ca_file }}
+        {{- end }}
+        Suppress_Type_Name On
+        #Type  _doc
+        #Logstash_Format "On"
+        #Retry_Limit {{ .Values.backend.es.retry_limit }}
+        #Time_Key "@timestamp"
+        Replace_Dots  On
+        #Logstash_Prefix sso_log
+        #Logstash_Prefix_Key sso_log
+        Index sso_ag_fwstrace_log
+{{- if .Values.backend.es.http_user }}
+        HTTP_User {{ .Values.backend.es.http_user }}
+{{- if .Values.backend.es.http_passwd }}
+        HTTP_Passwd {{ .Values.backend.es.http_passwd }}
+{{- else }}
+        HTTP_Passwd ${HTTP_PASSWORD}
+{{- end }}
+{{- end }}
+
+    [OUTPUT]
+        Name  es
+        Match sso_ag_affwebserv_log
+        Host  {{ .Values.backend.es.host }}
+        Port  {{ .Values.backend.es.port }}
+        tls   {{ .Values.backend.es.tls }}
+        tls.verify {{ .Values.backend.es.tls_verify }}
+        {{- if .Values.backend.es.tls_ca_file }}
+        tls.ca_file {{ .Values.backend.es.tls_ca_file }}
+        {{- end }}
+        Suppress_Type_Name On
+        #Type  _doc
+        #Logstash_Format "On"
+        #Retry_Limit {{ .Values.backend.es.retry_limit }}
+        #Time_Key "@timestamp"
+        Replace_Dots  On
+        #Logstash_Prefix sso_log
+        #Logstash_Prefix_Key sso_log
+        Index sso_ag_affwebserv_log
+{{- if .Values.backend.es.http_user }}
+        HTTP_User {{ .Values.backend.es.http_user }}
+{{- if .Values.backend.es.http_passwd }}
+        HTTP_Passwd {{ .Values.backend.es.http_passwd }}
+{{- else }}
+        HTTP_Passwd ${HTTP_PASSWORD}
+{{- end }}
+{{- end }}
+
+# end of .Values.global.sso.enabled
+{{- end }}
+
+{{ else if eq .Values.backend.type "splunk" }}
+    [OUTPUT]
+        Name  splunk
+        Match ssp_log
+        Host  {{ .Values.backend.splunk.host }}
+        Port  {{ .Values.backend.splunk.port }}
+        Splunk_Token  {{ .Values.backend.splunk.token }}
+        Splunk_Send_Raw {{ .Values.backend.splunk.send_raw}}
+        TLS   {{ .Values.backend.splunk.tls }}
+        TLS.Verify   {{ .Values.backend.splunk.tls_verify }}
+        tls.debug {{ .Values.backend.splunk.tls_debug }}
+        #event_index ssp_log
+
+    [OUTPUT]
+        Name  splunk
+        Match ssp_audit
+        Host  {{ .Values.backend.splunk.host }}
+        Port  {{ .Values.backend.splunk.port }}
+        Splunk_Token  {{ .Values.backend.splunk.token }}
+        Splunk_Send_Raw {{ .Values.backend.splunk.send_raw}}
+        TLS   {{ .Values.backend.splunk.tls }}
+        TLS.Verify   {{ .Values.backend.splunk.tls_verify }}
+        tls.debug {{ .Values.backend.splunk.tls_debug }}
+        #event_index ssp_audit
+
+     [OUTPUT]
+        Name  splunk
+        Match ssp_tp_log
+        Host  {{ .Values.backend.splunk.host }}
+        Port  {{ .Values.backend.splunk.port }}
+        Splunk_Token  {{ .Values.backend.splunk.token }}
+        Splunk_Send_Raw {{ .Values.backend.splunk.send_raw}}
+        TLS   {{ .Values.backend.splunk.tls }}
+        TLS.Verify   {{ .Values.backend.splunk.tls_verify }}
+        tls.debug {{ .Values.backend.splunk.tls_debug }}
+        #event_index ssp_tp_log
+
+{{ else if eq .Values.backend.type "stackdriver" }}
+    [OUTPUT]
+        Name  stackdriver
+        Match *
+        resource global
+{{- if .Values.backend.stackdriver.google_service_credentials }}
+        google_service_credentials /secure/google_service_credentials.json
+{{- else }}
+        service_account_email  {{ .Values.backend.stackdriver.service_account_email }}
+        service_account_secret  {{ .Values.backend.stackdriver.service_account_secret }}
+{{- end }}
+{{ else if eq .Values.backend.type "http" }}
+    [OUTPUT]
+        Name  http
+        Match *
+        Host {{ .Values.backend.http.host }}
+        Port {{ .Values.backend.http.port }}
+        URI {{ .Values.backend.http.uri }}
+{{- if .Values.backend.http.http_user }}
+        HTTP_User {{ .Values.backend.http.http_user }}
+        HTTP_Passwd {{ .Values.backend.http.http_passwd }}
+{{- end }}
+        tls {{ .Values.backend.http.tls }}
+        tls.verify {{ .Values.backend.http.tls_verify }}
+        tls.debug {{ .Values.backend.http.tls_debug }}
+{{- if .Values.backend.http.proxy }}
+        Proxy {{ .Values.backend.http.proxy }}
+{{- end }}
+        Format {{ .Values.backend.http.format }}
+{{- end }}
+{{- if .Values.backend.http.json_date_format }}
+        json_date_format {{ .Values.backend.http.json_date_format }}
+{{- end }}
+{{- range  .Values.backend.http.headers }}
+        Header  {{ . }}
+{{- end }}
+{{- if .Values.extraEntries.output }}
+{{ .Values.extraEntries.output | indent 8 }}
+{{- end }}
+
+  fluent-bit-streamer.conf: |
+    [STREAM_TASK]
+        Name   ssp_log
+        Exec   CREATE STREAM ssp_log WITH (tag='ssp_log') AS SELECT * from TAG:'ssp_msg.*' WHERE type = 'log';
+    [STREAM_TASK]
+        Name   ssp_audit
+        Exec   CREATE STREAM ssp_audit WITH (tag='ssp_audit') AS SELECT * from TAG:'ssp_msg.*' WHERE type = 'audit';
+    [STREAM_TASK]
+        Name   ssp_tp_log
+        Exec   CREATE STREAM ssp_tp_log WITH (tag='ssp_tp_log') AS SELECT * from TAG:'ssp_msg.*' WHERE NOT @record.contains(type);
+{{- if .Values.analytics.enabled }}
+    [STREAM_TASK]
+        Name   ssp_audit_siddhi
+        Exec   CREATE STREAM ssp_audit_siddhi WITH (tag='ssp_audit_siddhi') AS SELECT * from TAG:'ssp_msg.*' WHERE type = 'audit' AND eventId = 'auth-mgr.auth.success';
+{{- end }}
+{{- if .Values.global.sso.enabled }}
+    [STREAM_TASK]
+        Name   sso_ps_log
+        Exec   CREATE STREAM sso_ps_log WITH (tag='sso_ps_log') AS SELECT * from TAG:'sso_ps_log_msg.*';
+    [STREAM_TASK]
+        Name   sso_ps_trace
+        Exec   CREATE STREAM sso_ps_trace WITH (tag='sso_ps_trace') AS SELECT * from TAG:'sso_ps_trace_msg.*';
+    [STREAM_TASK]
+        Name   sso_adminps_log
+        Exec   CREATE STREAM sso_adminps_log WITH (tag='sso_adminps_log') AS SELECT * from TAG:'sso_adminps_log_msg.*';
+    [STREAM_TASK]
+        Name   sso_adminps_trace
+        Exec   CREATE STREAM sso_adminps_trace WITH (tag='sso_adminps_trace') AS SELECT * from TAG:'sso_adminps_trace_msg.*';
+    [STREAM_TASK]
+        Name   sso_adminui_log
+        Exec   CREATE STREAM sso_adminui_log WITH (tag='sso_adminui_log') AS SELECT * from TAG:'sso_adminui_log_msg.*';
+    [STREAM_TASK]
+        Name   sso_ps_access
+        Exec   CREATE STREAM sso_ps_access WITH (tag='sso_ps_access') AS SELECT * from TAG:'sso_ps_access_msg.*';
+    [STREAM_TASK]
+        Name   sso_adminps_access
+        Exec   CREATE STREAM sso_adminps_access WITH (tag='sso_adminps_access') AS SELECT * from TAG:'sso_adminps_access_msg.*';
+    [STREAM_TASK]
+        Name   sso_agsrv_log
+        Exec   CREATE STREAM sso_agsrv_log WITH (tag='sso_agsrv_log') AS SELECT * from TAG:'sso_ag_srv_log_msg.*';
+    [STREAM_TASK]
+        Name   sso_agsps_log
+        Exec   CREATE STREAM sso_agsps_log WITH (tag='sso_agsps_log') AS SELECT * from TAG:'sso_ag_sps_log_msg.*';
+    [STREAM_TASK]
+        Name   sso_ag_fwstrace_log
+        Exec   CREATE STREAM sso_ag_fwstrace_log WITH (tag='sso_ag_fwstrace_log') AS SELECT * from TAG:'sso_ag_fwstrace_log_msg.*';
+    [STREAM_TASK]
+        Name   sso_ag_affwebserv_log
+        Exec   CREATE STREAM sso_ag_affwebserv_log WITH (tag='sso_ag_affwebserv_log') AS SELECT * from TAG:'sso_ag_affwebserv_log_msg.*';
+
+{{- end }}
+
+  fluent-bit.conf: |
+    @INCLUDE fluent-bit-service.conf
+    @INCLUDE fluent-bit-input.conf
+    @INCLUDE fluent-bit-filter.conf
+    @INCLUDE fluent-bit-output.conf
+
+  parsers.conf: |
+    [PARSER]
+        Name        docker
+        Format      json
+        Time_Keep   off
+        Time_Key    time
+        # TBD: update to use log entry's timestamp
+        Time_Format %Y-%m-%dT%H:%M:%S.%LZ
+        Decode_Field_As escaped log
+    [PARSER]
+        Name        cri
+        Format      regex
+        Regex       ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<log>.*)$
+        Time_Key    time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+
+{{- end -}}
+{{- end -}}

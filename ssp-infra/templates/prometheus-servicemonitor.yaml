@@ -1,0 +1,35 @@
+{{- if .Values.db.enabled -}}
+{{- if not .Values.db.cluster.enabled -}}
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1/ServiceMonitor" }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ template "ssp-infra.fullname" . }}-db-metrics
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ template "ssp-infra.name" . }}-servicemonitor
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_"}}
+    heritage: {{ .Release.Service }}
+    release: prometheus-operator
+    {{- with .Values.global.monitoring.prometheusOperator.serviceMonitor.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  endpoints:
+  - port: db-metrics
+    interval: {{ .Values.global.monitoring.prometheusOperator.serviceMonitor.interval }}
+  namespaceSelector:
+    matchNames:
+    - {{ .Release.Namespace }}
+  selector:
+    matchLabels:
+{{/*
+      this label matches percona's db service in case we need to scrape it in the future
+      app.kubernetes.io/instance: {{ template "db.pxcName.def" . }}
+*/}}
+      release: {{ .Release.Name }}
+      ssp-infra-prometheus-metrics: db-metrics
+{{- end }}
+{{- end }}
+{{- end }}
+

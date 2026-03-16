@@ -1,0 +1,102 @@
+{{- if .Values.db.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "ssp-infra.fullname" . }}-create-db-job-{{randAlphaNum 4 | lower }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ template "ssp-infra.name" . }}
+    app.kubernetes.io/name: {{ template "ssp-infra.name" . }}-create-db-job
+    app.kubernetes.io/version: {{ .Chart.AppVersion | replace "+" "_" | quote }}
+    app.kubernetes.io/component: utility
+    app.kubernetes.io/part-of: {{ template "ssp-infra.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+spec:
+  # currently we do not want to restart in case the job fails
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: {{ template "ssp-infra.name" . }}
+        app.kubernetes.io/name: {{ template "ssp-infra.name" . }}-create-db-job
+        app.kubernetes.io/version: {{ .Chart.AppVersion | replace "+" "_" | quote }}
+        app.kubernetes.io/component: utility
+        app.kubernetes.io/part-of: {{ template "ssp-infra.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    spec:
+      restartPolicy: Never
+      {{- if .Values.global.registry.existingSecrets }}
+      imagePullSecrets:
+      {{- toYaml .Values.global.registry.existingSecrets | nindent 6 }}
+      {{- else if .Values.global.registry.credentials.username }}
+      imagePullSecrets:
+      - name: ssp-infra-registrypullsecret
+      {{- end }}
+      securityContext:
+        runAsUser: {{ .Values.global.securityContext.runAsUser }}
+        runAsGroup: {{ .Values.global.securityContext.runAsGroup }}
+        fsGroup: {{ .Values.global.securityContext.fsGroup }}
+      containers:
+      - name: ssp-db-create
+        image: "{{ .Values.db.image.pxc.repository}}:{{ .Values.db.image.pxc.tag }}"
+        imagePullPolicy: {{ .Values.db.imagePullPolicy }}
+        securityContext:
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+          seccompProfile:
+          {{- toYaml .Values.global.securityContext.seccompProfile | nindent 12 }}
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        env:
+          - name: MYSQL_USER
+            value: root
+          - name: MYSQL_PWD
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "db.secretName" . }}
+                key: root
+          - name: MYSQL_HOST
+            value: {{ template "db.hostName" . }}
+          - name: MYSQL_TCP_PORT
+            value: "3306"
+          - name: SCHEMA_NAME
+            value: {{ .Values.db.schema.name }}
+          - name: SCHEMA_USER
+            value: {{ .Values.db.schema.user }}
+          - name: SCHEMA_PWD
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "db.secretName" . }}
+                key: mysql-password
+        command: ["bash"]
+        args: ["-c", "until ( mysql -h${MYSQL_HOST} -P${MYSQL_TCP_PORT} -u${MYSQL_USER} -p${MYSQL_PWD} -e \"CREATE DATABASE IF NOT EXISTS ${SCHEMA_NAME};  CREATE USER IF NOT EXISTS ${SCHEMA_USER} IDENTIFIED WITH mysql_native_password BY '${SCHEMA_PWD}'; ALTER USER ${SCHEMA_USER} IDENTIFIED WITH mysql_native_password BY '${SCHEMA_PWD}'; GRANT ALL ON ${SCHEMA_NAME}.* TO ${SCHEMA_USER} ;\" );  do echo waiting for mysql on ${MYSQL_HOST}:${MYSQL_TCP_PORT}; sleep 5; done;"]
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+{{- end }}
