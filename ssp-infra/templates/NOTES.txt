@@ -1,8 +1,0 @@
-SSP Infra deployment complete. Components installed:
-
-{{- if .Values.db.enabled }}
-- Database
-{{- end -}}
-{{- if index .Values "fluent-bit" "enabled" }}
-- Fluent Bit
-{{- end -}}
