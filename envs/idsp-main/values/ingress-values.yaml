@@ -1,5 +1,7 @@
 # USER-SUPPLIED VALUES: null
 controller:
+  admissionWebhooks:
+    enabled: true
   allowSnippetAnnotations: true
   config:
     annotation-value-word-blocklist: load_module\,lua_package\,_by_lua\,location\,root\,proxy_pass\,serviceaccount\,{\,}\,\'\,\\\\
