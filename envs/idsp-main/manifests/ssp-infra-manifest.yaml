@@ -4,6 +4,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: ssp-infra-fluent-bit
+  namespace: ssp
   labels:
     helm.sh/chart: fluent-bit-0.20.3
     app.kubernetes.io/name: fluent-bit
@@ -16,12 +17,14 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: ssp-infra-ssp-infra-percona-xtradb-cluster-operator
+  namespace: ssp
 ---
 # Source: ssp-infra/templates/db-secrets.yaml
 apiVersion: v1
 kind: Secret
 metadata:
   name: ssp-ssp-db-pxc
+  namespace: ssp
   annotations:
     # specifically keeping this secret to ensure DB passwords are not accidentally deleted if secret was generated with random values
     "helm.sh/resource-policy": "keep"
@@ -46,6 +49,7 @@ data:
 kind: Secret
 metadata:
   name: ssp-ssp-db-ssl-pxc
+  namespace: ssp
 type: kubernetes.io/tls
 ---
 # Source: ssp-infra/templates/db-ssl-secrets.yaml
@@ -57,6 +61,7 @@ data:
 kind: Secret
 metadata:
   name: ssp-ssp-db-ssl-pxc-internal
+  namespace: ssp
 type: kubernetes.io/tls
 ---
 # Source: ssp-infra/templates/configmap-fluent-bit.yaml
@@ -64,6 +69,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: ssp-infra-config
+  namespace: ssp
   labels:
     app: ssp-infra
     chart: ssp-infra-1.0.3228
@@ -208,6 +214,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: ssp-infra-fluent-bit
+  namespace: ssp
   labels:
     helm.sh/chart: fluent-bit-0.20.3
     app.kubernetes.io/name: fluent-bit
@@ -230,6 +237,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: ssp-infra-fluent-bit
+  namespace: ssp
   labels:
     helm.sh/chart: fluent-bit-0.20.3
     app.kubernetes.io/name: fluent-bit
@@ -250,6 +258,7 @@ kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: ssp-infra-ssp-infra-percona-xtradb-cluster-operator
+  namespace: ssp
 rules:
 - apiGroups:
   - pxc.percona.com
@@ -345,6 +354,7 @@ kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: ssp-infra-ssp-infra-service-account-percona-xtradb-cluster-operator
+  namespace: ssp
 subjects:
 - kind: ServiceAccount
   name: ssp-infra-ssp-infra-percona-xtradb-cluster-operator
@@ -358,6 +368,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ssp-infra-fluent-bit
+  namespace: ssp
   labels:
     helm.sh/chart: fluent-bit-0.20.3
     app.kubernetes.io/name: fluent-bit
@@ -402,6 +413,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: ssp-infra-fluent-bit
+  namespace: ssp
   labels:
     helm.sh/chart: fluent-bit-0.20.3
     app.kubernetes.io/name: fluent-bit
@@ -555,6 +567,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ssp-infra-ssp-infra-percona-xtradb-cluster-operator
+  namespace: ssp
 spec:
   replicas: 1
   selector:
@@ -672,6 +685,7 @@ kind: PerconaXtraDBCluster
 metadata:
 # "ssp" in the name matches name of the SSP's chart
   name: ssp-ssp-db
+  namespace: ssp
 #  finalizers:
 #    - delete-pxc-pods-in-order
 #    - delete-proxysql-pvc
@@ -1087,7 +1101,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: "ssp-infra-fluent-bit-test-connection"
-  labels:
+  namespace: ssp
     helm.sh/chart: fluent-bit-0.20.3
     app.kubernetes.io/name: fluent-bit
     app.kubernetes.io/instance: ssp-infra
