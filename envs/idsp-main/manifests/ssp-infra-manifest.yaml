@@ -642,7 +642,7 @@ spec:
         fsGroup: 1337
       containers:
       - name: ssp-db-create
-        image: "percona/percona-xtradb-cluster:8.0.36-28"
+        image: "percona/percona-xtradb-cluster:8.4.0-1"
         imagePullPolicy: IfNotPresent
         securityContext:
           runAsNonRoot: true
@@ -720,7 +720,7 @@ spec:
     schedule: "0 4 * * *"
   pxc:
     size: 1
-    image: "percona/percona-xtradb-cluster:8.0.36-28"
+    image: "percona/percona-xtradb-cluster:8.4.0-1"
     imagePullSecrets:
     - name: ssp-staging-registrypullsecret
     imagePullPolicy: IfNotPresent
