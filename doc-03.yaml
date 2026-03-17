@@ -1,0 +1,20 @@
+---
+# Source: ssp-infra/templates/db-secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ssp-ssp-db-pxc
+  namespace: ssp
+  annotations:
+    # specifically keeping this secret to ensure DB passwords are not accidentally deleted if secret was generated with random values
+    "helm.sh/resource-policy": "keep"
+type: Opaque
+data:
+  mysql-password: "Ym5aSGFBYVpqbFJxT3pCSjhNQ3c5U29LWFBkc1VSSFo="
+  root: "WTF5VGs0NnBsMWJKeTJyZTliS3JnYmU5ekRhNE5nM00="
+  xtrabackup: "WWVNVWFTTjM3RFI4ekR6MnJadDdxWnB2RHY1UlM3NHE="
+  monitor: "QndHWW1MaWxIenBDaE1kZVIyZ2tXZDFoUUdneVdQYnI="
+  clustercheck: "NmJkUUhpOFZKT0x4RVBDVldnY1k5U2RYNTVrTG1pU3I="
+  proxyadmin: "dlFZcEw0OGM3TDVZVklaWUFqaDE1NDBxNXhDSlh0SHo="
+  pmmserver: "MGNyTWtWcHV4a3E2OFc1dnhZRmNSTmYwaExiaTFYeW0="
+  operator: "QTk2SlVIWVEyYTBJVzFpQlk3R3pOd25PTFJUelY5OEE="

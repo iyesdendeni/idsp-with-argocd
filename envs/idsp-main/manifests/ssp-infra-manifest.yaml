@@ -1102,6 +1102,7 @@ kind: Pod
 metadata:
   name: "ssp-infra-fluent-bit-test-connection"
   namespace: ssp
+  labels:
     helm.sh/chart: fluent-bit-0.20.3
     app.kubernetes.io/name: fluent-bit
     app.kubernetes.io/instance: ssp-infra

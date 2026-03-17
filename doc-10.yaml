@@ -1,0 +1,14 @@
+---
+# Source: ssp-infra/templates/mysql-operator-rbac.yaml
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ssp-infra-ssp-infra-service-account-percona-xtradb-cluster-operator
+  namespace: ssp
+subjects:
+- kind: ServiceAccount
+  name: ssp-infra-ssp-infra-percona-xtradb-cluster-operator
+roleRef:
+  kind: Role
+  name: ssp-infra-ssp-infra-percona-xtradb-cluster-operator
+  apiGroup: rbac.authorization.k8s.io

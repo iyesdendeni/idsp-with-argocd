@@ -1,0 +1,23 @@
+---
+# Source: ssp-infra/charts/fluent-bit/templates/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ssp-infra-fluent-bit
+  namespace: ssp
+  labels:
+    helm.sh/chart: fluent-bit-0.20.3
+    app.kubernetes.io/name: fluent-bit
+    app.kubernetes.io/instance: ssp-infra
+    app.kubernetes.io/version: "1.9.5"
+    app.kubernetes.io/managed-by: Helm
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
