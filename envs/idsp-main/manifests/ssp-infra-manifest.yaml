@@ -667,7 +667,7 @@ spec:
         args: ["-c", "until ( mysql -h${MYSQL_HOST} -P${MYSQL_TCP_PORT} -u${MYSQL_USER} -p${MYSQL_PWD} -e \"CREATE DATABASE IF NOT EXISTS ${SCHEMA_NAME};  CREATE USER IF NOT EXISTS ${SCHEMA_USER} IDENTIFIED WITH mysql_native_password BY '${SCHEMA_PWD}'; ALTER USER ${SCHEMA_USER} IDENTIFIED WITH mysql_native_password BY '${SCHEMA_PWD}'; GRANT ALL ON ${SCHEMA_NAME}.* TO ${SCHEMA_USER} ;\" );  do echo waiting for mysql on ${MYSQL_HOST}:${MYSQL_TCP_PORT}; sleep 5; done;"]
 ---
 # Source: ssp-infra/templates/db-cluster.yaml
-apiVersion: pxc.percona.com/v1-6-0
+apiVersion: pxc.percona.com/v1-11-0
 kind: PerconaXtraDBCluster
 metadata:
 # "ssp" in the name matches name of the SSP's chart
