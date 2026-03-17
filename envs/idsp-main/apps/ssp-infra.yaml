@@ -4,7 +4,7 @@ metadata:
   name: ssp-infra
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "7"
+    argocd.argoproj.io/sync-wave: "5"
 spec:
   destination:
     namespace: ssp
