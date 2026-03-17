@@ -1,7 +1,0 @@
----
-# Source: ssp-infra/templates/mysql-operator-rbac.yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: ssp-infra-ssp-infra-percona-xtradb-cluster-operator
-  namespace: ssp

@@ -17,7 +17,6 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: ssp-infra-ssp-infra-percona-xtradb-cluster-operator
-  namespace: ssp
 ---
 # Source: ssp-infra/templates/db-secrets.yaml
 apiVersion: v1
