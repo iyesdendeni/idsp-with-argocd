@@ -27,4 +27,7 @@ ssp:
     tls:
       secretName: ssp-general-tls
     type: nginx
+  keys:
+    mek:
+      existingSecret: ssp-mek-secret
   
