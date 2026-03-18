@@ -802,7 +802,7 @@ spec:
             storage: 80Gi
     gracePeriod: 600
   haproxy:
-    enabled: false
+    enabled: true 
     size: 1
     image: "percona/percona-xtradb-cluster-operator:1.6.0-haproxy"
     imagePullSecrets:
@@ -1004,8 +1004,6 @@ spec:
 #     service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
   pmm:
     enabled: false
-    imagePullSecrets:
-    - name: ssp-staging-registrypullsecret
     imagePullPolicy: IfNotPresent
     serverHost: percona-pmm-service.monitoring.svc
     serverUser: admin
