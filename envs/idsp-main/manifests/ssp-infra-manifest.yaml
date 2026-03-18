@@ -802,7 +802,7 @@ spec:
             storage: 80Gi
     gracePeriod: 600
   haproxy:
-    enabled: true
+    enabled: false
     size: 1
     image: "percona/percona-xtradb-cluster-operator:1.6.0-haproxy"
     imagePullSecrets:
