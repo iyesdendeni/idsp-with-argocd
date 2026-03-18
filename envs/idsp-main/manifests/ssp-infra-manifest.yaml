@@ -281,6 +281,7 @@ rules:
   - ""
   resources:
   - pods
+  - pods/log
   - pods/exec
   - configmaps
   - services
@@ -348,6 +349,18 @@ rules:
   - patch
   - delete
   - deletecollection
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
 ---
 # Source: ssp-infra/templates/mysql-operator-rbac.yaml
 kind: RoleBinding
@@ -789,7 +802,7 @@ spec:
             storage: 80Gi
     gracePeriod: 600
   haproxy:
-    enabled: false
+    enabled: true
     size: 1
     image: "percona/percona-xtradb-cluster-operator:1.6.0-haproxy"
     imagePullSecrets:
@@ -874,7 +887,7 @@ spec:
 #     service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
   proxysql:
     enabled: false
-    size: 0
+    size: 1
     image: "percona/percona-xtradb-cluster-operator:1.6.0-proxysql"
     imagePullSecrets:
     - name: ssp-staging-registrypullsecret
