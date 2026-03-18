@@ -21,6 +21,9 @@ ssp:
       registry:
         existingSecrets:
         - name: ssp-staging-registrypullsecret
+  db:
+    serviceHost: ssp-ssp-db-pxc
+    servicePort: 3306
   ingress:
     host: ssp.id-broadcom.com
     ingressClassName: nginx
