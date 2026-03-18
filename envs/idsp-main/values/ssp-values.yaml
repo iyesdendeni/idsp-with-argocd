@@ -30,4 +30,126 @@ ssp:
     tls:
       secretName: ssp-general-tls
     type: nginx
+    # Ensure the router ingress supports the exact backend routing used by legacy paths.
+    # These locations are applied in the nginx server block for the router ingress.
+    additionalAnnotations:
+      nginx.ingress.kubernetes.io/server-snippet: |
+        # Legacy-style path routing (tenant prefix + service path)
+        # Each block proxies the matching path to the correct service.
+        location ~ ^/\.well-known/oauth-protected-resource/(.*?)/(mcp$)$ {
+          proxy_pass https://ssp-ssp-azserver:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(assetlinks\.json$)$ {
+          proxy_pass https://ssp-ssp-factor:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(.well-known/oauth-protected-resource/mcp$)$ {
+          proxy_pass https://ssp-ssp-azserver:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(mcp$)$ {
+          proxy_pass https://ssp-ssp-admin:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(.*/.well-known/openid-configuration$)$ {
+          proxy_pass https://ssp-ssp-azserver:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(.*/.well-known/oauth-authorization-server$)$ {
+          proxy_pass https://ssp-ssp-azserver:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(.well-known/openid-configuration$)$ {
+          proxy_pass https://ssp-ssp-azserver:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(.well-known/oauth-authorization-server$)$ {
+          proxy_pass https://ssp-ssp-azserver:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(ldap/.*)$ {
+          proxy_pass https://ssp-ssp-admin:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(idstore/.*)$ {
+          proxy_pass https://ssp-ssp-admin:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(factor/.*)$ {
+          proxy_pass https://ssp-ssp-factor:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(geolocation/.*)$ {
+          proxy_pass https://ssp-ssp-geolocation:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(access/.*)$ {
+          proxy_pass https://ssp-ssp-auth-mgr:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(auth/.*)$ {
+          proxy_pass https://ssp-ssp-auth-mgr:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(me/.*)$ {
+          proxy_pass https://ssp-ssp-auth-mgr:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(.*/oauth2/.*)$ {
+          proxy_pass https://ssp-ssp-azserver:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(oauth2/.*)$ {
+          proxy_pass https://ssp-ssp-azserver:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(saml/.*)$ {
+          proxy_pass https://ssp-ssp-azserver:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(launch/.*)$ {
+          proxy_pass https://ssp-ssp-azserver:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(iarisk/.*)$ {
+          proxy_pass https://ssp-ssp-iarisk:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(iaservice/.*)$ {
+          proxy_pass https://ssp-ssp-iarisk:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(admin/.*)$ {
+          proxy_pass https://ssp-ssp-admin:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(ldap/v1/authenticate.*)$ {
+          proxy_pass https://ssp-ssp-factor:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(identity/.*)$ {
+          proxy_pass https://ssp-ssp-identity:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/(scim2/.*)$ {
+          proxy_pass https://ssp-ssp-identity:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/ui/v1/(adminconsole/.*)$|adminconsole$ {
+          proxy_pass https://ssp-ssp-adminconsole:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/ui/v1/(signin/.*)$|signin$ {
+          proxy_pass https://ssp-ssp-signin:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/ui/v1/(device/.*)$|device$ {
+          proxy_pass https://ssp-ssp-signin:443;
+          proxy_ssl_server_name on;
+        }
+        location ~ ^/(.*?)/ui/v1/(selfserviceconsole/.*)$|selfserviceconsole$ {
+          proxy_pass https://ssp-ssp-selfserviceconsole:443;
+          proxy_ssl_server_name on;
+        }
   
