@@ -11,9 +11,9 @@ spec:
     server: https://kubernetes.default.svc
   project: default
   source:
-    directory: 
+    directory:
       recurse: true
-    path: envs/idsp-gw
+    path: envs/idsp-gw/apps
     targetRevision: main
     repoURL: https://github.com/iyesdendeni/idsp-with-argocd.git
   syncPolicy:

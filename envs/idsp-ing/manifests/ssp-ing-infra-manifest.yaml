@@ -6,10 +6,10 @@ metadata:
   name: ssp-infra-fluent-bit
   namespace: ssp-ing
   labels:
-    helm.sh/chart: fluent-bit-0.20.3
+    helm.sh/chart: fluent-bit-0.47.10
     app.kubernetes.io/name: fluent-bit
     app.kubernetes.io/instance: ssp-infra
-    app.kubernetes.io/version: "1.9.5"
+    app.kubernetes.io/version: "3.1.9"
     app.kubernetes.io/managed-by: Helm
 ---
 # Source: ssp-infra/templates/mysql-operator-rbac.yaml
@@ -30,14 +30,14 @@ metadata:
     "helm.sh/resource-policy": "keep"
 type: Opaque
 data:
-  mysql-password: "Ym5aSGFBYVpqbFJxT3pCSjhNQ3c5U29LWFBkc1VSSFo="
-  root: "WTF5VGs0NnBsMWJKeTJyZTliS3JnYmU5ekRhNE5nM00="
-  xtrabackup: "WWVNVWFTTjM3RFI4ekR6MnJadDdxWnB2RHY1UlM3NHE="
-  monitor: "QndHWW1MaWxIenBDaE1kZVIyZ2tXZDFoUUdneVdQYnI="
-  clustercheck: "NmJkUUhpOFZKT0x4RVBDVldnY1k5U2RYNTVrTG1pU3I="
-  proxyadmin: "dlFZcEw0OGM3TDVZVklaWUFqaDE1NDBxNXhDSlh0SHo="
-  pmmserver: "MGNyTWtWcHV4a3E2OFc1dnhZRmNSTmYwaExiaTFYeW0="
-  operator: "QTk2SlVIWVEyYTBJVzFpQlk3R3pOd25PTFJUelY5OEE="
+  mysql-password: "YWplTDNaWTdjb3RWWHBiZmJKM21IRjcwTlBla2h3ZUU="
+  root: "OHlDMVVrRDdmamhlaTJ1bHZ1Vm1wQkFyM2VZUlN2VTM="
+  xtrabackup: "eU9iSFVadmdhekF4aDFtQzdmZlJIb01HVWpXYkJ0aFQ="
+  monitor: "UkYyNzV0Y1VrbHlXSHZORkNKUHVrV1BWVjVrVGZEYzE="
+  clustercheck: "cm1ucmJPbWZIS21hR2Q5YzFiTUNuZ0RBV2ZqcWJvSVM="
+  proxyadmin: "ZEsyR3R6Rkx5Q0gzTTZNRFgySHg1VFR0cVgyeThuYUw="
+  pmmserver: "N2VhTnNsS243clZoVEEzVzZtMldudXJFMTlUUWFWMzY="
+  operator: "QjNqRklOWmx3SWJxcndTbGRNT1kwQTBSUFFabFNuRjk="
 ---
 # Source: ssp-infra/templates/db-ssl-secrets.yaml
 # TBD allow for production to pass in SSL secret
@@ -65,6 +65,8 @@ metadata:
 type: kubernetes.io/tls
 ---
 # Source: ssp-infra/templates/configmap-fluent-bit.yaml
+#create the new config map only if there is no old (deprecated) fluent-bit configmap
+#(determined by checking the cmversion annotation, $foundDepricatedCM = false)
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -72,17 +74,19 @@ metadata:
   namespace: ssp-ing
   labels:
     app: ssp-infra
-    chart: ssp-infra-1.0.3228
+    chart: ssp-infra-4.0.0-1144.stage
     heritage: Helm
     release: ssp-infra
+  annotations:
+    configVersion: "1.0"
 data:
   fluent-bit-service.conf: |
     [SERVICE]
         Flush        1
         Daemon       Off
         Log_Level    info
-        Parsers_File parsers.conf
-        Streams_File fluent-bit-streamer.conf
+        Parsers_File conf/parsers.conf
+        Streams_File conf/fluent-bit-streamer.conf
         HTTP_Server  On
         HTTP_Listen  0.0.0.0
         HTTP_Port    2020
@@ -90,15 +94,30 @@ data:
 
   fluent-bit-input.conf: |
     [INPUT]
-        Name             tail
-        Path             /var/log/containers/ssp-ssp-*.log
-        Parser           docker
-        Tag              ssp_msg.*
-        Refresh_Interval 5
-        Mem_Buf_Limit    5MB
-        Skip_Long_Lines  Off
-        DB               /var/log/tail-containers-state-ssp-ssp.db
-        DB.Sync          Normal
+        Name              tail
+        Path              /var/log/containers/ssp-ssp-*.log
+        Parser            cri
+        Tag               ssp_msg.*
+        Refresh_Interval  5
+        Mem_Buf_Limit     20MB
+        Buffer_Max_Size   1M
+        Buffer_Chunk_Size 128k
+        Skip_Long_Lines   On
+        DB                /var/log/tail-containers-state-ssp-ssp.db
+        DB.Sync           Normal
+    [INPUT]
+        Name              tail
+        Path              /var/log/containers/ssp-hazelcast-entp-*.log
+        Parser            hzcri
+        Tag               ssp_msg.*
+        Refresh_Interval  5
+        Mem_Buf_Limit     20MB
+        Buffer_Max_Size   1M
+        Buffer_Chunk_Size 128k
+        Skip_Long_Lines   On
+        DB                /var/log/tail-containers-state-ssp-ssphz.db
+        DB.Sync           Normal
+
 
   fluent-bit-filter.conf: |
     [FILTER]
@@ -116,63 +135,43 @@ data:
         #Use_Journal         On
 
 
+
+
+
   fluent-bit-output.conf: |
     [OUTPUT]
-        Name  es
         Match ssp_log
+        Name es
         Host  elasticsearch-master.logging.svc
         Port  9200
-        tls   off
-        tls.verify on
         Suppress_Type_Name On
-        #Type  _doc
-        #Logstash_Format "On"
-        #Retry_Limit False
-        #Time_Key "@timestamp"
-        Replace_Dots  On
-        #Logstash_Prefix ssp_log
-        #Logstash_Prefix_Key ssp_log
+        Replace_Dots On
         Index ssp_log
         HTTP_User elastic
-        HTTP_Passwd changeme
-
+        HTTP_Passwd changeMe
+  
     [OUTPUT]
-        Name  es
         Match ssp_audit
+        Name es
         Host  elasticsearch-master.logging.svc
         Port  9200
-        tls   off
-        tls.verify on
         Suppress_Type_Name On
-        #Type  _doc
-        #Logstash_Format "On"
-        #Retry_Limit False
-        #Time_Key "@timestamp"
-        Replace_Dots  On
-        #Logstash_Prefix ssp_audit
-        #Logstash_Prefix_Key ssp_audit
+        Replace_Dots On
         Index ssp_audit
         HTTP_User elastic
-        HTTP_Passwd changeme
-
+        HTTP_Passwd changeMe
+  
     [OUTPUT]
-        Name  es
         Match ssp_tp_log
+        Name es
         Host  elasticsearch-master.logging.svc
         Port  9200
-        tls   off
-        tls.verify on
         Suppress_Type_Name On
-        #Type  _doc
-        #Logstash_Format "On"
-        #Retry_Limit False
-        #Time_Key "@timestamp"
-        Replace_Dots  On
-        #Logstash_Prefix ssp_tp_log
-        #Logstash_Prefix_Key ssp_tp_log
+        Replace_Dots On
         Index ssp_tp_log
         HTTP_User elastic
-        HTTP_Passwd changeme
+        HTTP_Passwd changeMe
+  
 
 
 
@@ -188,10 +187,10 @@ data:
         Exec   CREATE STREAM ssp_tp_log WITH (tag='ssp_tp_log') AS SELECT * from TAG:'ssp_msg.*' WHERE NOT @record.contains(type);
 
   fluent-bit.conf: |
-    @INCLUDE fluent-bit-service.conf
-    @INCLUDE fluent-bit-input.conf
-    @INCLUDE fluent-bit-filter.conf
-    @INCLUDE fluent-bit-output.conf
+    @INCLUDE conf/fluent-bit-service.conf
+    @INCLUDE conf/fluent-bit-input.conf
+    @INCLUDE conf/fluent-bit-filter.conf
+    @INCLUDE conf/fluent-bit-output.conf
 
   parsers.conf: |
     [PARSER]
@@ -208,6 +207,12 @@ data:
         Regex       ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<log>.*)$
         Time_Key    time
         Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+    [PARSER]
+        Name        hzcri
+        Format      regex
+        Regex       ^(?<time>[^ ]* {1,2}[^ ]* [^ ]*) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<log>.*)$
+        Time_Key    time
+        Time_Format %Y-%m-%d T%H:%M:%S.%L%z
 ---
 # Source: ssp-infra/charts/fluent-bit/templates/clusterrole.yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -216,10 +221,10 @@ metadata:
   name: ssp-infra-fluent-bit
   namespace: ssp-ing
   labels:
-    helm.sh/chart: fluent-bit-0.20.3
+    helm.sh/chart: fluent-bit-0.47.10
     app.kubernetes.io/name: fluent-bit
     app.kubernetes.io/instance: ssp-infra
-    app.kubernetes.io/version: "1.9.5"
+    app.kubernetes.io/version: "3.1.9"
     app.kubernetes.io/managed-by: Helm
 rules:
   - apiGroups:
@@ -239,10 +244,10 @@ metadata:
   name: ssp-infra-fluent-bit
   namespace: ssp-ing
   labels:
-    helm.sh/chart: fluent-bit-0.20.3
+    helm.sh/chart: fluent-bit-0.47.10
     app.kubernetes.io/name: fluent-bit
     app.kubernetes.io/instance: ssp-infra
-    app.kubernetes.io/version: "1.9.5"
+    app.kubernetes.io/version: "3.1.9"
     app.kubernetes.io/managed-by: Helm
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -251,7 +256,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: ssp-infra-fluent-bit
-    namespace: ssp-ing
+    namespace: ssp
 ---
 # Source: ssp-infra/templates/mysql-operator-rbac.yaml
 kind: Role
@@ -278,11 +283,23 @@ rules:
   - patch
   - delete
 - apiGroups:
+  - admissionregistration.k8s.io
+  resources:
+  - validatingwebhookconfigurations
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
   - ""
   resources:
   - pods
-  - pods/log
   - pods/exec
+  - pods/log
   - configmaps
   - services
   - persistentvolumeclaims
@@ -335,6 +352,25 @@ rules:
   - patch
   - delete
 - apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
   - certmanager.k8s.io
   - cert-manager.io
   resources:
@@ -349,25 +385,13 @@ rules:
   - patch
   - delete
   - deletecollection
-- apiGroups:
-  - coordination.k8s.io
-  resources:
-  - leases
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
 ---
 # Source: ssp-infra/templates/mysql-operator-rbac.yaml
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: ssp-infra-ssp-infra-service-account-percona-xtradb-cluster-operator
-  namespace: ssp-ing  
+  namespace: ssp-ing
 subjects:
 - kind: ServiceAccount
   name: ssp-infra-ssp-infra-percona-xtradb-cluster-operator
@@ -383,10 +407,10 @@ metadata:
   name: ssp-infra-fluent-bit
   namespace: ssp-ing
   labels:
-    helm.sh/chart: fluent-bit-0.20.3
+    helm.sh/chart: fluent-bit-0.47.10
     app.kubernetes.io/name: fluent-bit
     app.kubernetes.io/instance: ssp-infra
-    app.kubernetes.io/version: "1.9.5"
+    app.kubernetes.io/version: "3.1.9"
     app.kubernetes.io/managed-by: Helm
 spec:
   type: ClusterIP
@@ -407,7 +431,7 @@ metadata:
   namespace: ssp-ing
   labels:
     app: ssp-infra-db-metrics-exporter
-    chart: ssp-infra-1.0.3228
+    chart: ssp-infra-4.0.0-1144.stage
     heritage: Helm
     release: ssp-infra
     ssp-infra-prometheus-metrics: db-metrics
@@ -428,10 +452,10 @@ metadata:
   name: ssp-infra-fluent-bit
   namespace: ssp-ing
   labels:
-    helm.sh/chart: fluent-bit-0.20.3
+    helm.sh/chart: fluent-bit-0.47.10
     app.kubernetes.io/name: fluent-bit
     app.kubernetes.io/instance: ssp-infra
-    app.kubernetes.io/version: "1.9.5"
+    app.kubernetes.io/version: "3.1.9"
     app.kubernetes.io/managed-by: Helm
 spec:
   selector:
@@ -440,12 +464,11 @@ spec:
       app.kubernetes.io/instance: ssp-infra
   template:
     metadata:
-      annotations:
-        checksum/config: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-        checksum/luascripts: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
       labels:
         app.kubernetes.io/name: fluent-bit
         app.kubernetes.io/instance: ssp-infra
+      annotations:
+        checksum/config: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
     spec:
       serviceAccountName: ssp-infra-fluent-bit
       imagePullSecrets:
@@ -454,8 +477,13 @@ spec:
       dnsPolicy: ClusterFirst
       containers:
         - name: fluent-bit
-          image: "cr.fluentbit.io/fluent/fluent-bit:1.9.5"
+          image: "cr.fluentbit.io/fluent/fluent-bit:3.1.9"
           imagePullPolicy: IfNotPresent
+          command:
+            - /fluent-bit/bin/fluent-bit
+          args:
+            - --workdir=/fluent-bit/etc
+            - --config=/fluent-bit/etc/conf/fluent-bit.conf
           ports:
             - name: http
               containerPort: 2020
@@ -468,9 +496,13 @@ spec:
             httpGet:
               path: /api/v1/health
               port: http
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
-            - mountPath: /fluent-bit/etc
-              name: config
+            - name: config
+              mountPath: /fluent-bit/etc/conf
             - mountPath: /var/log
               name: varlog
             - mountPath: /var/lib/docker/containers
@@ -502,7 +534,7 @@ metadata:
   namespace: ssp-ing
   labels:
     app: ssp-infra-db-metrics-exporter
-    chart: ssp-infra-1.0.3228
+    chart: ssp-infra-4.0.0-1144.stage
     heritage: Helm
     release: ssp-infra
 spec:
@@ -532,12 +564,18 @@ spec:
         fsGroup: 1337
       containers:
         - name: ssp-infra-db-metrics-exporter
-          image: "prom/mysqld-exporter:v0.12.1"
+          image: "prom/mysqld-exporter:v0.14.0"
           imagePullPolicy: IfNotPresent
           securityContext:
             runAsNonRoot: true
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            seccompProfile:
+              type: RuntimeDefault
           env:
           - name: MYSQL_HOST
             value: ssp-ssp-db-pxc
@@ -596,13 +634,15 @@ spec:
       - name: ssp-staging-registrypullsecret
       containers:
       - name: percona-xtradb-cluster-operator
-        image: "percona/percona-xtradb-cluster-operator:1.13.0"
+        image: "percona/percona-xtradb-cluster-operator:1.14.1"
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 60000
           name: metrics
         command:
         - percona-xtradb-cluster-operator
+        resources:
+          null
         env:
         - name: WATCH_NAMESPACE
           valueFrom:
@@ -619,18 +659,17 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: ssp-infra-ssp-infra-create-db-job-6ugw
+  name: ssp-infra-ssp-infra-create-db-job-u2un
   namespace: ssp-ing
   labels:
     app: ssp-infra
     app.kubernetes.io/name: ssp-infra-create-db-job
-    app.kubernetes.io/version: "1.0.3228"
+    app.kubernetes.io/version: "4.0.0-1144.stage"
     app.kubernetes.io/component: utility
     app.kubernetes.io/part-of: ssp-infra
     app.kubernetes.io/instance: ssp-infra
-    app.kubernetes.io/managed-by: Helm 
-    helm.sh/chart: ssp-infra-1.0.3228
-  
+    app.kubernetes.io/managed-by: Helm
+    helm.sh/chart: ssp-infra-4.0.0-1144.stage
 spec:
   # currently we do not want to restart in case the job fails
   backoffLimit: 1
@@ -639,12 +678,12 @@ spec:
       labels:
         app: ssp-infra
         app.kubernetes.io/name: ssp-infra-create-db-job
-        app.kubernetes.io/version: "1.0.3228"
+        app.kubernetes.io/version: "4.0.0-1144.stage"
         app.kubernetes.io/component: utility
         app.kubernetes.io/part-of: ssp-infra
         app.kubernetes.io/instance: ssp-infra
-        app.kubernetes.io/managed-by: Helm 
-        helm.sh/chart: ssp-infra-1.0.3228
+        app.kubernetes.io/managed-by: Helm
+        helm.sh/chart: ssp-infra-4.0.0-1144.stage
     spec:
       restartPolicy: Never
       imagePullSecrets:
@@ -661,6 +700,12 @@ spec:
           runAsNonRoot: true
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+          seccompProfile:
+            type: RuntimeDefault
         resources:
           limits:
             cpu: 200m
@@ -693,20 +738,20 @@ spec:
         args: ["-c", "until ( mysql -h${MYSQL_HOST} -P${MYSQL_TCP_PORT} -u${MYSQL_USER} -p${MYSQL_PWD} -e \"CREATE DATABASE IF NOT EXISTS ${SCHEMA_NAME};  CREATE USER IF NOT EXISTS ${SCHEMA_USER} IDENTIFIED WITH mysql_native_password BY '${SCHEMA_PWD}'; ALTER USER ${SCHEMA_USER} IDENTIFIED WITH mysql_native_password BY '${SCHEMA_PWD}'; GRANT ALL ON ${SCHEMA_NAME}.* TO ${SCHEMA_USER} ;\" );  do echo waiting for mysql on ${MYSQL_HOST}:${MYSQL_TCP_PORT}; sleep 5; done;"]
 ---
 # Source: ssp-infra/templates/db-cluster.yaml
-apiVersion: pxc.percona.com/v1-11-0
+apiVersion: pxc.percona.com/v1
 kind: PerconaXtraDBCluster
 metadata:
 # "ssp" in the name matches name of the SSP's chart
   name: ssp-ssp-db
   namespace: ssp-ing
-#  finalizers:
+  finalizers:
 #    - delete-pxc-pods-in-order
 #    - delete-proxysql-pvc
 #    - delete-pxc-pvc
 #  annotations:
 #    percona.com/issue-vault-token: "true"
 spec:
-  crVersion: 1.10.0
+  crVersion: 1.14.0
   secretsName: ssp-ssp-db-pxc
 ##  vaultSecretName: keyring-secret-vault
   sslSecretName: ssp-ssp-db-ssl-pxc
@@ -724,7 +769,7 @@ spec:
 #  pause: false
 #
 #  updateStrategy: https://www.percona.com/blog/2020/08/11/smart-update-strategy-in-percona-kubernetes-operator-for-percona-xtradb-cluster/
-#  updateStrategy = OnDelete | RollingUpgrade | SmartUpdate 
+#  updateStrategy = OnDelete | RollingUpgrade | SmartUpdate
 #  apply = Never or Disabled | Recommended | Latest | <version Number>
   updateStrategy: RollingUpgrade
   upgradeOptions:
@@ -744,6 +789,8 @@ spec:
 #    forceUnsafeBootstrap: false
 #    configuration: |
 #      [mysqld]
+#      innodb_buffer_pool_size=\{\{containerMemoryLimit * 3 / 4\}\}
+#      max_connections=300
 #      wsrep_debug=ON
 #      wsrep_provider_options="gcache.size=1G; gcache.recover=yes"
 #      [sst]
@@ -804,7 +851,7 @@ spec:
   haproxy:
     enabled: false
     size: 1
-    image: "percona/percona-xtradb-cluster-operator:1.6.0-haproxy"
+    image: "percona/percona-xtradb-cluster-operator:1.14.1-haproxy"
     imagePullSecrets:
     - name: ssp-staging-registrypullsecret
     imagePullPolicy: IfNotPresent
@@ -887,8 +934,8 @@ spec:
 #     service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
   proxysql:
     enabled: false
-    size: 1
-    image: "percona/percona-xtradb-cluster-operator:1.6.0-proxysql"
+    size: 0
+    image: "percona/percona-xtradb-cluster-operator:1.14.1-proxysql2.5.5-1.2"
     imagePullSecrets:
     - name: ssp-staging-registrypullsecret
     imagePullPolicy: IfNotPresent
@@ -1004,6 +1051,9 @@ spec:
 #     service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
   pmm:
     enabled: false
+    image: "percona/pmm-client:2.43.2"
+    imagePullSecrets:
+    - name: ssp-staging-registrypullsecret
     imagePullPolicy: IfNotPresent
     serverHost: percona-pmm-service.monitoring.svc
     serverUser: admin
@@ -1012,7 +1062,7 @@ spec:
 #        memory: 200M
 #        cpu: 500m
   backup:
-    image: "percona/percona-xtradb-cluster-operator:1.6.0-pxc8.0-backup"
+    image: "percona/percona-xtradb-cluster-operator:1.14.1-pxc8.0-backup-pxb8.0.35"
     imagePullSecrets:
     - name: ssp-staging-registrypullsecret
     imagePullPolicy: IfNotPresent
@@ -1106,28 +1156,3 @@ spec:
 ##        schedule: "0 0 * * *"
 ##        keep: 5
 ##        storageName: fs-pvc
----
-# Source: ssp-infra/charts/fluent-bit/templates/tests/test-connection.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: "ssp-infra-fluent-bit-test-connection"
-  namespace: ssp-ing
-  labels:
-    helm.sh/chart: fluent-bit-0.20.3
-    app.kubernetes.io/name: fluent-bit
-    app.kubernetes.io/instance: ssp-infra
-    app.kubernetes.io/version: "1.9.5"
-    app.kubernetes.io/managed-by: Helm
-  annotations:
-    "helm.sh/hook": test-success
-spec:
-  containers:
-    - name: wget
-      image: "busybox:latest"
-      imagePullPolicy: Always
-      command: ['wget']
-      args: ['ssp-infra-fluent-bit:2020']
-  imagePullSecrets:
-    - name: ssp-staging-registrypullsecret
-  restartPolicy: Never

@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: ssp
+  name: ssp-gw
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "10"  
@@ -20,7 +20,7 @@ spec:
 #      targetRevision: 4.0.0-1144.stage
       helm:
         valueFiles: 
-        - $values/envs/idsp-main/values/ssp-values.yaml
+        - $values/envs/idsp-gw/values/ssp-gw-values.yaml
     - repoURL: https://github.com/iyesdendeni/idsp-with-argocd.git
       targetRevision: main
       ref: values

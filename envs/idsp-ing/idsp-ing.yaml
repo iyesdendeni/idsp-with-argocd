@@ -13,7 +13,7 @@ spec:
   source:
     directory: 
       recurse: true
-    path: envs/idsp-ing
+    path: envs/idsp-ing/apps
     targetRevision: main
     repoURL: https://github.com/iyesdendeni/idsp-with-argocd.git
   syncPolicy:

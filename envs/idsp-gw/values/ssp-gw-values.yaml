@@ -26,7 +26,11 @@ ssp:
     servicePort: 3306
   ingress:
     host: ssp.id-broadcom.com
-    ingressClassName: nginx
     tls:
       secretName: ssp-general-tls
-    type: nginx
+    type: gatewayapi
+    gatewayApi:
+    gatewayApiConfig:
+      gatewayClassName: gke-l7-global-external-managed 
+      createGateway: true
+      createBackendTLSPolicy: false
