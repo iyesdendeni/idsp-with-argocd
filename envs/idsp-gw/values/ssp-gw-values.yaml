@@ -29,10 +29,9 @@ ssp:
     tls:
       secretName: ssp-general-tls
     type: gatewayapi
-    # Required by ssp/templates/_helpers.tpl "gateway.type" (ssprouter-traffic-policy.yaml)
+    # Chart reads ssp.ingress.gatewayApi.* (ssprouter-gateway.yaml, _helpers.tpl)
     gatewayApi:
       gatewayType: gke
-    gatewayApiConfig:
       gatewayClassName: gke-l7-global-external-managed
       createGateway: true
       createBackendTLSPolicy: false
