@@ -38,6 +38,7 @@ data:
   proxyadmin: "dlFZcEw0OGM3TDVZVklaWUFqaDE1NDBxNXhDSlh0SHo="
   pmmserver: "MGNyTWtWcHV4a3E2OFc1dnhZRmNSTmYwaExiaTFYeW0="
   operator: "QTk2SlVIWVEyYTBJVzFpQlk3R3pOd25PTFJUelY5OEE="
+---
 # Alias for SSP app (dataseed job expects ssp-gw-ssp-db-pxc)
 apiVersion: v1
 kind: Secret
