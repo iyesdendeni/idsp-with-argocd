@@ -12,8 +12,8 @@ spec:
   project: default
   sources:
     - repoURL: https://github.com/iyesdendeni/idsp-with-argocd.git
-      targetRevision: 4.0.2-1031.stage
-      path: envs/idsp-gw/manifests/ssp-infra-manifest.yaml
+      targetRevision: main
+      path: envs/idsp-gw/manifests
 #      repoURL: https://ssp-helm-charts-staging.storage.googleapis.com
 #      targetRevision: 4.0.0-1144.stage
     - repoURL: https://github.com/iyesdendeni/idsp-with-argocd.git
