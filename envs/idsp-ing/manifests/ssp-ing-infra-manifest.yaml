@@ -1052,8 +1052,6 @@ spec:
   pmm:
     enabled: false
     image: "percona/pmm-client:2.43.2"
-    imagePullSecrets:
-    - name: ssp-staging-registrypullsecret
     imagePullPolicy: IfNotPresent
     serverHost: percona-pmm-service.monitoring.svc
     serverUser: admin
