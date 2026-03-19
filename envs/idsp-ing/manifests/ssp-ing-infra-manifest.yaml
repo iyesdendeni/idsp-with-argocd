@@ -256,7 +256,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: ssp-infra-fluent-bit
-    namespace: ssp
+    namespace: ssp-ing
 ---
 # Source: ssp-infra/templates/mysql-operator-rbac.yaml
 kind: Role
