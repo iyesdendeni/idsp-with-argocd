@@ -39,7 +39,7 @@ ssp:
     serviceHost: ssp-ssp-db-pxc
     servicePort: 3306
   ingress:
-    host: ssp.id-broadcom.com
+    host: idsp.id-broadcom.com
     tls:
       secretName: ssp-general-tls
     type: gatewayapi
