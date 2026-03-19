@@ -1,19 +1,19 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: ssp-gw-infra
+  name: ssp-envoy-infra
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "5"
 spec:
   destination:
-    namespace: ssp-gw
+    namespace: ssp-envoy
     server: https://kubernetes.default.svc
   project: default
   sources:
     - repoURL: https://github.com/iyesdendeni/idsp-with-argocd.git
       targetRevision: main
-      path: envs/idsp-gw/manifests
+      path: envs/idsp-envoy/manifests
 #      repoURL: https://ssp-helm-charts-staging.storage.googleapis.com
 #      targetRevision: 4.0.0-1144.stage
     - repoURL: https://github.com/iyesdendeni/idsp-with-argocd.git

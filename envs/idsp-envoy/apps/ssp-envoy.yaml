@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: ssp-gw
+  name: ssp-envoy
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "10"  
@@ -11,7 +11,7 @@ metadata:
 # See docs/ssp-maint-reference.md
 spec:
   destination:
-    namespace: ssp-gw
+    namespace: ssp-envoy
     server: https://kubernetes.default.svc
   project: default
   sources:
@@ -22,7 +22,7 @@ spec:
 #      targetRevision: 4.0.0-1144.stage
       helm:
         valueFiles: 
-        - $values/envs/idsp-gw/values/ssp-gw-values.yaml
+        - $values/envs/idsp-envoy/values/ssp-envoy-values.yaml
     - repoURL: https://github.com/iyesdendeni/idsp-with-argocd.git
       targetRevision: main
       ref: values
