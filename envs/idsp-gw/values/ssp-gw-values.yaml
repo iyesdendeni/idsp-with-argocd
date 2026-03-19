@@ -1,4 +1,12 @@
 #USER-SUPPLIED VALUES: null
+# Root-level global is what many Helm subcharts (e.g. ssp-router) use for imagePullSecrets
+global:
+  imagePullSecrets:
+    - name: ssp-staging-registrypullsecret
+  ssp:
+    registry:
+      existingSecrets:
+        - name: ssp-staging-registrypullsecret
 hazelcast-enterprise:
   cluster:
     memberCount: 2
