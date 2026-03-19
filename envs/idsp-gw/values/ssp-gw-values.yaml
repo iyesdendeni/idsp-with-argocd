@@ -30,6 +30,9 @@ ssp:
       enabled: true
   global:
     drSite: false
+    # Required when changing ssp.ingress.host after DB was seeded with a different FQDN (dataseed fatal otherwise).
+    # After dataseed succeeds, you may set back to false if Broadcom docs allow.
+    forceIngressHostOverride: true
     ssp:
       registry:
         imageRepositoryBase: us.gcr.io/saasdev-sed-ssp-hp/maint/
