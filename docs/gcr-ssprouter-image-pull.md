@@ -1,5 +1,31 @@
 # Fixing `ssp-router` image pull: `us.gcr.io/saasdev-sed-ssp-hp/maint/ssprouter`
 
+## How the SSP chart wires pull secrets (4.0.2.x)
+
+The **router** Deployment uses **`ssp.global.ssp.registry.existingSecrets`** only (`ssprouter-deployment.yaml`). It does **not** read Kubernetes-style `global.imagePullSecrets` at the pod spec for `ssp-router`.
+
+Your values must include:
+
+```yaml
+ssp:
+  global:
+    ssp:
+      registry:
+        existingSecrets:
+          - name: ssp-staging-registrypullsecret   # or your secret name
+```
+
+**Verify the rendered pod spec** (after `helm template` or from a live pod):
+
+```bash
+kubectl get pod -n ssp-gw -l app.kubernetes.io/name=ssp-router -o jsonpath='{.items[0].spec.imagePullSecrets}' ; echo
+kubectl get pod -n ssp-gw -l app.kubernetes.io/name=ssp-router -o jsonpath='{.items[0].spec.containers[0].image}' ; echo
+```
+
+If `imagePullSecrets` is populated but pulls still fail, the problem is the **secret’s credentials** (or the image/tag), not Argo CD or missing Helm keys.
+
+---
+
 ## What the error means
 
 You may see both:

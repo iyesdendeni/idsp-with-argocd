@@ -1,7 +1,10 @@
 #USER-SUPPLIED VALUES: null
-# Images for maint chart: us.gcr.io/saasdev-sed-ssp-hp/maint/<component>:<tag>
-# Pull secret must allow pull from project saasdev-sed-ssp-hp (us.gcr.io). See docs/ssp-maint-reference.md
-# Root-level global is what many Helm subcharts (e.g. ssp-router) use for imagePullSecrets
+# Images: us.gcr.io/saasdev-sed-ssp-hp/maint/<component>:<tag> (chart 4.0.2: ssp-router tag 4.1.0.1283)
+#
+# ssp-router imagePullSecrets come ONLY from ssp.global.ssp.registry.existingSecrets (see chart ssprouter-deployment.yaml).
+# Root global.imagePullSecrets below does NOT affect the router; it can help other charts/subcharts.
+# If pulls fail with 403 / not found: fix ssp-staging-registrypullsecret (GCP SA JSON key with pull access to
+# project saasdev-sed-ssp-hp on us.gcr.io). See docs/gcr-ssprouter-image-pull.md
 global:
   imagePullSecrets:
     - name: ssp-staging-registrypullsecret
@@ -29,8 +32,9 @@ ssp:
     drSite: false
     ssp:
       registry:
+        imageRepositoryBase: us.gcr.io/saasdev-sed-ssp-hp/maint/
         existingSecrets:
-        - name: ssp-staging-registrypullsecret
+          - name: ssp-staging-registrypullsecret
   db:
     serviceHost: ssp-ssp-db-pxc
     servicePort: 3306
