@@ -39,6 +39,25 @@ data:
   pmmserver: "N2VhTnNsS243clZoVEEzVzZtMldudXJFMTlUUWFWMzY="
   operator: "QjNqRklOWmx3SWJxcndTbGRNT1kwQTBSUFFabFNuRjk="
 ---
+# Alias for SSP app (dataseed job expects ssp-ing-ssp-db-pxc)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ssp-ing-ssp-db-pxc
+  namespace: ssp-ing
+  annotations:
+    "helm.sh/resource-policy": "keep"
+type: Opaque
+data:
+  mysql-password: "YWplTDNaWTdjb3RWWHBiZmJKM21IRjcwTlBla2h3ZUU="
+  root: "OHlDMVVrRDdmamhlaTJ1bHZ1Vm1wQkFyM2VZUlN2VTM="
+  xtrabackup: "eU9iSFVadmdhekF4aDFtQzdmZlJIb01HVWpXYkJ0aFQ="
+  monitor: "UkYyNzV0Y1VrbHlXSHZORkNKUHVrV1BWVjVrVGZEYzE="
+  clustercheck: "cm1ucmJPbWZIS21hR2Q5YzFiTUNuZ0RBV2ZqcWJvSVM="
+  proxyadmin: "ZEsyR3R6Rkx5Q0gzTTZNRFgySHg1VFR0cVgyeThuYUw="
+  pmmserver: "N2VhTnNsS243clZoVEEzVzZtMldudXJFMTlUUWFWMzY="
+  operator: "QjNqRklOWmx3SWJxcndTbGRNT1kwQTBSUFFabFNuRjk="
+---
 # Source: ssp-infra/templates/db-ssl-secrets.yaml
 # TBD allow for production to pass in SSL secret
 apiVersion: v1
