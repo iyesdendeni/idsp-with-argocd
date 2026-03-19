@@ -1,4 +1,6 @@
 #USER-SUPPLIED VALUES: null
+# Images for maint chart: us.gcr.io/saasdev-sed-ssp-hp/maint/<component>:<tag>
+# Pull secret must allow pull from project saasdev-sed-ssp-hp (us.gcr.io). See docs/ssp-maint-reference.md
 # Root-level global is what many Helm subcharts (e.g. ssp-router) use for imagePullSecrets
 global:
   imagePullSecrets:
