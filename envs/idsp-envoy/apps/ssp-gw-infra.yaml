@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ssp-gw-infra
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  destination:
+    namespace: ssp-gw
+    server: https://kubernetes.default.svc
+  project: default
+  sources:
+    - repoURL: https://github.com/iyesdendeni/idsp-with-argocd.git
+      targetRevision: main
+      path: envs/idsp-gw/manifests
+#      repoURL: https://ssp-helm-charts-staging.storage.googleapis.com
+#      targetRevision: 4.0.0-1144.stage
+    - repoURL: https://github.com/iyesdendeni/idsp-with-argocd.git
+      targetRevision: main
+      ref: values
+  syncPolicy:
+    manual:
+      prune: true
+      selfHeal: true
+    syncOptions:
+        - CreateNamespace=true
