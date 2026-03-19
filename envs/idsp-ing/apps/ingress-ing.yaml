@@ -18,7 +18,7 @@ spec:
       targetRevision: 4.14.0
       helm:
         valueFiles: 
-        - $values/envs/idsp-main/values/ingress-values.yaml
+        - $values/envs/idsp-ing/values/ingress-ing-values.yaml
     - repoURL: https://github.com/iyesdendeni/idsp-with-argocd.git
       targetRevision: main
       ref: values
