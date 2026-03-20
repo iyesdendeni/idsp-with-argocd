@@ -45,6 +45,8 @@ ssp:
     host: ssp-envoy.id-broadcom.com
     tls:
       secretName: ssp-general-tls
+      wildcardTls:
+        generateSelfSignedCert: true
     type: gatewayapi
     # Chart reads ssp.ingress.gatewayApi.* (ssprouter-gateway.yaml, _helpers.tpl)
     gatewayApi:

@@ -48,7 +48,7 @@ ssp:
     type: gatewayapi
     # Chart reads ssp.ingress.gatewayApi.* (ssprouter-gateway.yaml, _helpers.tpl)
     gatewayApi:
-      gatewayType: gke
-      gatewayClassName: gke-l7-global-external-managed
+#      gatewayType: gke
+     gatewayClassName: gke-l7-global-external-managed
       createGateway: true
       createBackendTLSPolicy: false
