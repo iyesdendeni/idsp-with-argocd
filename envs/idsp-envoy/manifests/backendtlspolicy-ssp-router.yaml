@@ -1,0 +1,30 @@
+# Backend TLS from Envoy Gateway to ssp-router (TLS on targetPort 8095).
+# Prerequisites:
+# 1) ConfigMap ssp-envoy-ssp-router-tls-ca in ssp-envoy with key ca.crt (PEM).
+#    Create from chart ISK CA secret, e.g.:
+#    kubectl get secret ssp-envoy-ssp-keys-isk-ca -n ssp-envoy -o jsonpath='{.data.ca\.crt}' | base64 -d > /tmp/isk-ca.crt
+#    kubectl -n ssp-envoy create configmap ssp-envoy-ssp-router-tls-ca --from-file=ca.crt=/tmp/isk-ca.crt --dry-run=client -o yaml | kubectl apply -f -
+# 2) Keep ssp.ingress.gatewayApi.createBackendTLSPolicy: false in Helm if the chart's
+#    generated policy uses a hostname that does not match the router cert SAN (*.ssp-envoy.svc).
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: BackendTLSPolicy
+metadata:
+  name: ssp-envoy-ssp-router-backend-tls
+  namespace: ssp-envoy
+spec:
+  targetRefs:
+    - name: ssp-envoy-ssp-router
+      kind: Service
+      group: ""
+      sectionName: https
+  validation:
+    # SNI + verify name; must match SAN *.ssp-envoy.svc on the router server cert.
+    hostname: ssp-envoy-ssp-router.ssp-envoy.svc
+    subjectAltNames:
+      - type: Hostname
+        hostname: ssp-envoy-ssp-router.ssp-envoy.svc
+    caCertificateRefs:
+      - name: ssp-envoy-ssp-router-tls-ca
+        kind: ConfigMap
+        group: ""
