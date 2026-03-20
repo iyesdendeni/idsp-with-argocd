@@ -52,4 +52,8 @@ ssp:
     gatewayApi:
       gatewayClassName: envoy-gateway-class
       createGateway: true
-      createBackendTLSPolicy: true
+      # Match ssp-gw (GKE Gateway): Envoy→router TLS verify often causes
+      # "upstream connect error ... reset reason: connection termination" if CA/SNI
+      # does not match router's 8095 cert. Set true only if Broadcom requires it and
+      # BackendTLSPolicy trust bundle matches the router server cert.
+      createBackendTLSPolicy: false
