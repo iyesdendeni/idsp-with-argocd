@@ -42,7 +42,7 @@ ssp:
     serviceHost: ssp-ssp-db-pxc
     servicePort: 3306
   ingress:
-    host: ssp-envoy.id-broadcom.com
+    host: ssp-envoy.demo-broadcom.com
     tls:
       secretName: demo-broadcom-tls
 #      wildcardTls:
