@@ -56,4 +56,4 @@ ssp:
       # on :8095. With false, apply BackendTLSPolicy + CA ConfigMap from manifests
       # (see docs/envoy-gateway-ssp-router-upstream-tls.md). Chart-generated policy may
       # use a hostname that does not match the router cert SAN (*.ssp-envoy.svc).
-      createBackendTLSPolicy: false
+      createBackendTLSPolicy: true
