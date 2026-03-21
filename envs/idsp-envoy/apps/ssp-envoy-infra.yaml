@@ -11,11 +11,15 @@ spec:
     server: https://kubernetes.default.svc
   project: default
   sources:
-    - repoURL: https://github.com/iyesdendeni/idsp-with-argocd.git
-      targetRevision: main
-      path: envs/idsp-envoy/manifests
-#      repoURL: https://ssp-helm-charts-staging.storage.googleapis.com
-#      targetRevision: 4.0.0-1144.stage
+#    - repoURL: https://github.com/iyesdendeni/idsp-with-argocd.git
+#      targetRevision: main
+#      path: envs/idsp-envoy/manifests
+    - chart: ssp-infra
+      repoURL: https://ssp-helm-charts-staging.storage.googleapis.com
+      targetRevision: 4.0.2-1034.stage
+      helm:
+        valueFiles: 
+        - $values/envs/idsp-envoy/values/ssp-infra-envoy-values.yaml
     - repoURL: https://github.com/iyesdendeni/idsp-with-argocd.git
       targetRevision: main
       ref: values
