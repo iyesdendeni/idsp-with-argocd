@@ -57,3 +57,5 @@ ssp:
       # (see docs/envoy-gateway-ssp-router-upstream-tls.md). Chart-generated policy may
       # use a hostname that does not match the router cert SAN (*.ssp-envoy.svc).
       createBackendTLSPolicy: false
+# Added below to skip the wildcard listener for the router per Uzi's request
+      skipWildcardListener: true
