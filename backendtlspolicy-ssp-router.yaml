@@ -1,0 +1,22 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: BackendTLSPolicy
+metadata:
+  labels:
+    app.kubernetes.io/instance: ssp-envoy
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: ssp-backend-tls
+    helm.sh/chart: ssp-4.0.2-1034.stage
+  name: ssp-envoy-ssp-router-backend-tls
+  namespace: ssp-envoy
+spec:
+  targetRefs:
+  - group: ""
+    kind: Service
+    name: ssp-envoy-ssp-router
+  validation:
+    caCertificateRefs:
+    - group: ""
+      kind: Secret
+      name: ssp-envoy-ssp-keys-isk-ca
+#    hostname: any.ssp-envoy.svc
+    hostname: ssp-envoy-ssp-router.ssp-envoy.svc 
