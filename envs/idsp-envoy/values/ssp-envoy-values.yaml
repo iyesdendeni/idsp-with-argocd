@@ -52,6 +52,9 @@ ssp:
     gatewayApi:
       gatewayClassName: envoy-gateway-class
       createGateway: true
+      addresses:
+        - type: IPAddress
+          value: "136.117.172.108"
       # GKE Gateway (ssp-gw) can use false; Envoy Gateway still needs TLS to ssp-router
       # on :8095. With false, apply BackendTLSPolicy + CA ConfigMap from manifests
       # (see docs/envoy-gateway-ssp-router-upstream-tls.md). Chart-generated policy may
