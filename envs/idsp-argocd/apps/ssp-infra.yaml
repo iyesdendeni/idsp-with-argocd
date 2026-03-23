@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ssp-ing-infra
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  destination:
+    namespace: ssp-ing
+    server: https://kubernetes.default.svc
+  project: default
+  sources:
+    - repoURL: https://github.com/iyesdendeni/idsp-with-argocd.git
+      targetRevision: main
+      path: envs/idsp-ing/manifests
+    - repoURL: https://github.com/iyesdendeni/idsp-with-argocd.git
+      targetRevision: main
+      ref: values
+  syncPolicy:
+    manual:
+      prune: true
+      selfHeal: true
+    syncOptions:
+        - CreateNamespace=true
