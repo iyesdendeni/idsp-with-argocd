@@ -66,4 +66,4 @@ ssp:
   opa:
     args:
       pollingMinDelay: 15
-      pollingMaxDelay: 30 
+      pollingMaxDelay: 30
