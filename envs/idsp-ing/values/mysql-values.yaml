@@ -1,4 +1,6 @@
 
+architecture: replication
+
 auth:
   rootPassword: P@ssword01
   database: iamauth
