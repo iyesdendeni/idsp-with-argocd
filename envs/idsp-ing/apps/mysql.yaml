@@ -9,13 +9,13 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-  source:
-    repoURL: https://charts.bitnami.com/bitnami
-    chart: mysql
-    targetRevision: 8.4.0
-    helm:
-      valueFiles: 
-        - $values/envs/idsp-ing/values/mysql-values.yaml
+  sources:
+    - repoURL: https://charts.bitnami.com/bitnami
+      chart: mysql
+      targetRevision: 8.4.0
+      helm:
+        valueFiles: 
+          - $values/envs/idsp-ing/values/mysql-values.yaml
     - repoURL: https://github.com/iyesdendeni/idsp-with-argocd.git
       targetRevision: main
       ref: values
