@@ -1,9 +1,28 @@
 #USER-SUPPLIED VALUES: null
 db:
-  enabled: true
+  enabled: false
+sspfbService:
+  ingressLogsIncluded: false
 fluent-bit:
   imagePullSecrets:
   - name: ssp-staging-registrypullsecret
+#  customConfig:
+#    outputs:
+#    - tags:
+#      - ssp_log
+#      - ssp_tp_log
+#      - ssp_audit
+#      template: | 
+#        Name es
+#        Host  elasticsearch-es-http.logging.svc
+#        Port  9200
+#        tls On
+#        tls.verify Off
+#        Suppress_Type_Name On
+#        Replace_Dots On
+#        Index ${tag}-%Y.%m.%d
+#        HTTP_User elastic
+#        HTTP_Passwd $(kubectl get secret -n logging elasticsearch-es-elastic-user -o=jsonpath='{.data.elastic}' | base64 --decode; echo)
 global:
   registry:
     existingSecrets:
