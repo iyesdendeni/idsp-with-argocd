@@ -26,8 +26,10 @@ ssp:
     servicePort: 3306
     name: iamauth
     user: iamauth
-    password: P@ssword01
-    type: mysql
+    passwordSecret:
+      existingSecret: mysql-credentials   # K8s Secret with keys: mysql-root-password, mysql-password, mysql-replication-password
+      key: mysql-password
+
   ingress:
     host: ssp.id-broadcom.com
     ingressClassName: nginx

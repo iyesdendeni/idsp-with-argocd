@@ -11,10 +11,9 @@ image:
 architecture: replication
 
 auth:
-  rootPassword: P@ssword01
+  existingSecret: mysql-credentials   # K8s Secret with keys: mysql-root-password, mysql-password, mysql-replication-password
   database: iamauth
   username: iamauth
-  password: P@ssword01
 
 primary:
   persistence:
