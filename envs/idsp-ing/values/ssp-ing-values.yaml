@@ -22,8 +22,12 @@ ssp:
         existingSecrets:
         - name: ssp-staging-registrypullsecret
   db:
-    serviceHost: ssp-ssp-db-pxc
+    serviceHost: mysql-primary.databases.svc.cluster.local
     servicePort: 3306
+    name: iamauth
+    user: iamauth
+    password: P@ssword01
+    type: mysql
   ingress:
     host: ssp.id-broadcom.com
     ingressClassName: nginx
