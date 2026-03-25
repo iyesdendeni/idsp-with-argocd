@@ -1,0 +1,41 @@
+
+auth:
+  rootPassword: P@ssword01
+  database: iamauth
+  username: iamauth
+  password: P@ssword01
+
+primary:
+  persistence:
+    enabled: true
+    storageClass: fast-ssd
+    size: 50Gi
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+  configuration: |
+    [mysqld]
+    innodb_buffer_pool_size=1G
+    max_connections=200
+    character-set-server=utf8mb4
+
+# Enable read replicas
+secondary:
+  replicaCount: 2
+  persistence:
+    enabled: true
+    storageClass: fast-ssd
+    size: 50Gi
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
